@@ -1,6 +1,7 @@
 import { Startup } from '@/models/start-up';
 import { IUser } from '@/models/user';
 import { NextRequest, NextResponse } from 'next/server';
+import { connectToDB } from '@/lib/db';
 
 // startup associated with the logged-in user
 export async function GET(
@@ -12,6 +13,7 @@ export async function GET(
   }
 ) {
   try {
+    await connectToDB();
     const { userEmail } = await params;
 
     if (!userEmail) {

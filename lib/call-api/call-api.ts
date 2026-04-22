@@ -76,11 +76,14 @@ export const userStartups = async (): Promise<Startup[]> => {
 export const filterStartup = async (): Promise<Startup[]> => {
   try {
     const res = await fetch(`/api/startups`);
-    if (!res.ok) throw new Error('Failed to fetch startups');
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.details || errorData.error || 'Failed to fetch startups');
+    }
 
     const data: StartupListResponse = await res.json();
 
-    if (!data.startups || data.startups.length === 0) return notFound();
+    if (!data.startups || data.startups.length === 0) return [];
 
     return data.startups.map(transform);
 

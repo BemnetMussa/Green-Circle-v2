@@ -44,6 +44,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await connectToDB();
     const { id } = await params;
 
     if (!id) {
@@ -85,13 +86,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await connectToDB();
     const { id } = await params;
 
     if (!id) {
       return Response.json({ error: '`startupId` is required' }, { status: 400 });
     }
-
-    await connectToDB();
 
     const deleted = await Startup.findByIdAndDelete(id);
 

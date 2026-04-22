@@ -167,25 +167,20 @@ export async function GET(req: NextRequest) {
       filters.founderEmail = { $regex: founderEmail, $options: 'i' };
     }
 
-    // Fetch startups with populated founders
-    const startups = await Startup.find(filters).populate<{
-      founders: IUser[];
-    }>({
-      path: 'founders',
-      model: 'User',
-      select: 'name email role isValidate faydaId phone_number nationality bio',
-    });
+    // Fetch startups
+    const startups = await Startup.find(filters);
 
     return NextResponse.json({
       message: 'Startups retrieved successfully.',
       startups,
     });
   } catch (error: any) {
+    console.error('API Error in GET /api/startups:', error);
     return NextResponse.json(
       {
         error: 'Failed to retrieve startups',
         details: error.message,
-        msg: error,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     );

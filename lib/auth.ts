@@ -3,7 +3,28 @@ import { nextCookies } from 'better-auth/next-js';
 import { MongoClient } from 'mongodb';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 
-const client = new MongoClient(process.env.MONGODB_URI!);
+const mongoUri = process.env.MONGODB_URI;
+
+if (!mongoUri) {
+  throw new Error('Please define the MONGODB_URI environment variable');
+}
+
+// Use a global variable to preserve the MongoClient instance across hot-reloads in dev
+declare global {
+  var _mongoClient: MongoClient | undefined;
+}
+
+let client: MongoClient;
+
+if (process.env.NODE_ENV === 'development') {
+  if (!global._mongoClient) {
+    global._mongoClient = new MongoClient(mongoUri);
+  }
+  client = global._mongoClient;
+} else {
+  client = new MongoClient(mongoUri);
+}
+
 const db = client.db();
 
 export const auth = betterAuth({
