@@ -6,85 +6,122 @@ import { UserProfileDropdown } from './user-profile-dropdown';
 import { useEffect, useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { Logo } from './logo/greencirlce-logo';
-import Loading from '@/app/loading';
+import { MobileNav } from './mobile-nav';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface HeaderProps {
   currentPage?: string;
 }
+
+const NAV_ITEMS: { href: string; label: string; key: string }[] = [
+  { href: '/startups', label: 'Directory', key: 'startups' },
+  { href: '/analytics', label: 'Analytics', key: 'analytics' },
+  // Pulse moved to footer band only — system spine over publication spine.
+  // { href: '/pulse', label: 'Updates', key: 'pulse' },
+  // Commented out until Round 2 — routes don't exist yet:
+  // { href: '/stories', label: 'Stories', key: 'stories' },
+  // { href: '/about', label: 'About', key: 'about' },
+];
 
 export function Header({ currentPage }: HeaderProps) {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data } = await authClient.getSession();
-      setSession(data?.user || null);
-      setLoading(false);
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await authClient.getSession();
+        if (!cancelled) setSession(data?.user || null);
+      } catch {
+        if (!cancelled) setSession(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
-    fetchSession();
   }, []);
 
-  if (loading) return <Loading />;
+  const submitHref = session
+    ? session.role === 'startup'
+      ? '/submit/startup-info'
+      : '/submit/verify'
+    : '/login?callbackUrl=/submit/verify';
 
   return (
-    <header className="border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-40 border-b border-rule gc-glass-tint dark:border-rule">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="flex h-16 items-center justify-between gap-6">
+          <Logo />
 
-          {/* Brand */}
-          <Logo/> 
-
-          {/* Desktop Links */}
-          <nav className="hidden md:flex items-center space-x-10">
+          <nav className="hidden md:flex items-center gap-8">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={`text-sm transition-colors ${
+                  currentPage === item.key
+                    ? 'text-forest font-semibold'
+                    : 'text-ink-muted hover:text-ink font-medium'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
             <Link
-              href="/startups"
-              className={`transition-colors ${
-                currentPage === 'startups'
-                  ? 'text-emerald-600 font-medium'
-                  : 'text-gray-700 hover:text-gray-900'
-              }`}
-            >
-              Directory
-            </Link>
-
-            <Link
-              href={
-                session
-                  ? session.role === 'startup'
-                    ? '/submit/startup-info'
-                    : '/submit/verify'
-                  : '/login?callbackUrl=/submit/verify'
-              }
-              className={`transition-colors ${
+              href={submitHref}
+              className={`text-sm transition-colors ${
                 currentPage === 'submit'
-                  ? 'text-emerald-600 font-medium'
-                  : 'text-gray-700 hover:text-gray-900'
+                  ? 'text-forest font-semibold'
+                  : 'text-ink-muted hover:text-ink font-medium'
               }`}
             >
-              Submit Startup
+              Submit
             </Link>
+          </nav>
 
-            {/* Right Side Session Section */}
-            {session ? (
+          <div className="hidden min-w-0 shrink-0 items-center justify-end gap-3 md:flex">
+            <ThemeToggle />
+            {loading ? (
+              <div className="flex items-center gap-3 animate-pulse">
+                <div className="h-4 w-12 rounded bg-rule-soft dark:bg-rule/40" />
+                <div className="h-9 w-20 rounded-md bg-rule-soft dark:bg-rule/40" />
+              </div>
+            ) : session ? (
               <UserProfileDropdown session={session} />
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center gap-5">
                 <Link
                   href="/login"
-                  className="text-gray-700 hover:text-gray-900 transition"
+                  className="text-sm font-medium text-ink-muted hover:text-ink transition-colors"
                 >
-                  Login
+                  Log in
                 </Link>
                 <Button
                   asChild
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                  className="h-9 px-4 rounded-md bg-forest hover:bg-forest-soft text-paper text-sm font-medium shadow-sm transition-colors"
                 >
-                  <Link href="/register">Get Started</Link>
+                  <Link href="/register">Get started</Link>
                 </Button>
               </div>
             )}
-          </nav>
+          </div>
+
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <MobileNav
+              currentPage={currentPage}
+              navItems={[
+                ...NAV_ITEMS,
+                { href: '/analytics', label: 'Analytics', key: 'analytics' },
+                { href: submitHref, label: 'Submit', key: 'submit' } as any,
+              ]}
+              authed={!!session}
+              submitHref={submitHref}
+            />
+          </div>
         </div>
       </div>
     </header>

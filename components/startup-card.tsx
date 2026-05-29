@@ -1,99 +1,250 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Users, ShieldCheck, Calendar, ArrowRight } from 'lucide-react';
 import type { Startup } from '@/types';
 import { ImageWithFallback } from '@/components/image-withfallback';
+import { HandpickedMark } from '@/components/editorial/handpicked-mark';
+import { SectionKicker } from '@/components/editorial/section-kicker';
+import { displayStartupStage } from '@/lib/startup-stage';
+import { startupDetailHref } from '@/lib/startup-detail-href';
 
 interface StartupCardProps {
   startup: Startup;
+  variant?: 'grid' | 'row';
 }
 
-export function StartupCard({ startup }: StartupCardProps) {
+/**
+ * Editorial startup card. Reads as a magazine-archive item, not a database
+ * row. No shields, no dark navy header, no "View Details" CTA — the whole
+ * card is the link.
+ *
+ * Two layouts:
+ *   - `grid`  (default) — vertical card for the featured homepage grid and
+ *                         the directory grid view.
+ *   - `row`               — horizontal editorial row for the directory's
+ *                         default list view.
+ */
+export function StartupCard({ startup, variant = 'grid' }: StartupCardProps) {
+  if (variant === 'row') return <RowCard startup={startup} />;
+  return <GridCard startup={startup} />;
+}
+
+/* -------------------------------------------------------------------------- */
+
+function GridCard({ startup }: { startup: Startup }) {
+  const initials = getInitials(startup.name);
+  const stageLabel = displayStartupStage(startup.stage);
+  const href = startupDetailHref(startup);
+  const isSeekingInvestment = ['idea', 'pre-seed', 'seed'].includes(startup.stage || '');
+
   return (
-    <Card className="group flex flex-col h-full border-slate-200 bg-white overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-emerald-200/60">
-      
-      {/* 1. Card Header / Banner */}
-      <div className="relative h-24 w-full bg-gradient-to-r from-slate-800 to-slate-900">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-        
-        {startup.status === 'approved' && (
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-emerald-500/90 hover:bg-emerald-500 text-white border-none gap-1 shadow-sm backdrop-blur-sm">
-              <ShieldCheck className="h-3 w-3" /> Verified
-            </Badge>
-          </div>
+    <StartupCardShell
+      href={href}
+      className="group flex flex-col h-full bg-paper-tint rounded-lg border border-rule p-6 transition-all duration-300 hover:border-ink hover:-translate-y-0.5"
+    >
+      <div className="flex items-center justify-between">
+        <SectionKicker>{startup.sector || 'Startup'}</SectionKicker>
+        {isSeekingInvestment && (
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-forest/10 text-forest text-[10px] font-semibold uppercase tracking-wider">
+            Seeking Investment
+          </span>
         )}
       </div>
 
-      <CardContent className="relative pt-0 pb-4 flex flex-col grow">
-        
-        {/* 2. Logo Section */}
-        <div className="-mt-10 mb-4 flex justify-between items-end">
-          {/* 👇 FIXED: Added 'relative' here so the image stays inside this box */}
-          <div className="relative h-20 w-20 rounded-xl border-4 border-white bg-white shadow-sm overflow-hidden shrink-0">
-            <ImageWithFallback
-              src={startup.logo || ""} // Removed fallback string here, handled in component
-              alt={startup.name}
-              fill
-              className="object-cover"
-              sizes="80px" // Performance optimization
-            />
-          </div>
-          
-          <Badge variant="secondary" className="mb-1 bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200">
-            {startup.sector}
-          </Badge>
-        </div>
+      <LogoBlock
+        logo={startup.logo}
+        initials={initials}
+        name={startup.name}
+      />
 
-        {/* 3. Text Content */}
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between items-start">
-            <h3 className="font-bold text-xl text-slate-900 line-clamp-1 group-hover:text-emerald-700 transition-colors">
-              {startup.name}
-            </h3>
-          </div>
-          
-          {startup.location && (
-            <div className="flex items-center gap-1 text-sm text-slate-500">
-              <MapPin className="h-3.5 w-3.5" />
-              <span className="truncate">{startup.location}</span>
-            </div>
-          )}
+      <h3 className="mt-5 font-sans text-[1.35rem] font-semibold leading-snug text-ink tracking-tight group-hover:text-forest transition-colors text-balance">
+        {startup.name}
+      </h3>
 
-          <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed pt-2">
-            {startup.description}
-          </p>
-        </div>
+      <p className="mt-3 text-[0.975rem] text-ink-muted leading-[1.55] line-clamp-3 text-pretty">
+        {startup.description || 'Profile in progress.'}
+      </p>
 
-        {/* 4. Footer Info (Pushed to bottom) */}
-        <div className="mt-auto pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-500 mb-4">
-              <div className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5 text-slate-400" />
-                <span>{startup.employees || '0'} Employees</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                <span>{startup.foundedYear || 'N/A'}</span>
-              </div>
-            </div>
+      <div className="flex-1" />
 
-            <Button 
-              asChild 
-              className="w-full bg-slate-900 hover:bg-emerald-600 text-white shadow-sm transition-all duration-300 group-hover:shadow-emerald-200/50"
-            >
-              <Link href={`/startups/${startup._id}`} className="flex items-center justify-center gap-2">
-                View Details 
-                <ArrowRight className="h-4 w-4 opacity-70 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-        </div>
-
-      </CardContent>
-    </Card>
+      <div className="mt-8 pt-5 border-t border-rule-soft flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-ink-faint">
+        {startup.location && (
+          <span className="truncate">{startup.location}</span>
+        )}
+        {startup.foundedYear && (
+          <>
+            <Dot />
+            <span>Founded {startup.foundedYear}</span>
+          </>
+        )}
+        {stageLabel && (
+          <>
+            <Dot />
+            <span>{stageLabel}</span>
+          </>
+        )}
+        {startup.employees && (
+          <>
+            <Dot />
+            <span>{startup.employees} people</span>
+          </>
+        )}
+      </div>
+    </StartupCardShell>
   );
+}
+
+/* -------------------------------------------------------------------------- */
+
+function RowCard({ startup }: { startup: Startup }) {
+  const initials = getInitials(startup.name);
+  const stageLabel = displayStartupStage(startup.stage);
+  const href = startupDetailHref(startup);
+  const isSeekingInvestment = ['idea', 'pre-seed', 'seed'].includes(startup.stage || '');
+
+  return (
+    <StartupCardShell
+      href={href}
+      className="group grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_auto] gap-5 sm:gap-8 items-start py-8 border-b border-rule-soft transition-colors hover:bg-paper-tint/60 -mx-4 px-4 rounded-md"
+    >
+      <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-md bg-paper-deep border border-rule flex items-center justify-center overflow-hidden shrink-0">
+        {startup.logo ? (
+          <ImageWithFallback
+            src={startup.logo}
+            alt={`${startup.name} logo`}
+            width={80}
+            height={80}
+            className="w-full h-full object-contain p-2"
+          />
+        ) : (
+          <span
+            className="font-display text-2xl text-ink-faint font-medium"
+            style={{ fontVariationSettings: '"opsz" 48, "SOFT" 50' }}
+          >
+            {initials}
+          </span>
+        )}
+      </div>
+
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
+          <SectionKicker>{startup.sector || 'Startup'}</SectionKicker>
+          {isSeekingInvestment && (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-forest/10 text-forest text-[10px] font-semibold uppercase tracking-wider">
+              Seeking Investment
+            </span>
+          )}
+        </div>
+
+        <h3 className="font-sans text-xl sm:text-[1.4rem] font-semibold leading-snug text-ink tracking-tight group-hover:text-forest transition-colors text-balance">
+          {startup.name}
+        </h3>
+
+        <p className="mt-1.5 text-[0.975rem] text-ink-muted leading-[1.6] line-clamp-2 text-pretty max-w-none pr-4 sm:pr-8">
+          {startup.description || 'Profile in progress.'}
+        </p>
+
+        <div className="mt-4 flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-ink-faint">
+          {startup.location && <span>{startup.location}</span>}
+          {startup.foundedYear && (
+            <>
+              <Dot />
+              <span>Founded {startup.foundedYear}</span>
+            </>
+          )}
+          {stageLabel && (
+            <>
+              <Dot />
+              <span>{stageLabel}</span>
+            </>
+          )}
+          {startup.employees && (
+            <>
+              <Dot />
+              <span>{startup.employees} people</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="hidden sm:flex items-center text-ink-faint group-hover:text-forest transition-colors pt-1">
+        <span className="font-display text-xl">&rarr;</span>
+      </div>
+    </StartupCardShell>
+  );
+}
+
+function StartupCardShell({
+  href,
+  className,
+  children,
+}: {
+  href: string | null;
+  className: string;
+  children: ReactNode;
+}) {
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <div
+      className={`${className} cursor-default opacity-90`}
+      role="group"
+      title="This listing has no profile link id. Re-save the startup in MongoDB with a proper _id, or fix the API response."
+    >
+      {children}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+
+function LogoBlock({
+  logo,
+  initials,
+  name,
+}: {
+  logo?: string;
+  initials: string;
+  name: string;
+}) {
+  return (
+    <div className="mt-6 h-14 w-14 rounded-md bg-paper border border-rule flex items-center justify-center overflow-hidden">
+      {logo ? (
+        <ImageWithFallback
+          src={logo}
+          alt={`${name} logo`}
+          width={56}
+          height={56}
+          className="w-full h-full object-contain p-1.5"
+        />
+      ) : (
+        <span
+          className="font-display text-xl text-ink-faint font-medium"
+          style={{ fontVariationSettings: '"opsz" 36, "SOFT" 50' }}
+        >
+          {initials}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function Dot() {
+  return <span aria-hidden className="h-1 w-1 rounded-full bg-ink-faint/60" />;
+}
+
+function getInitials(name: string): string {
+  if (!name) return 'GC';
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join('');
 }

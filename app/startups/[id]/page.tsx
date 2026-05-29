@@ -7,13 +7,12 @@ interface StartupPageProps {
 }
 
 export default async function Page({ params }: StartupPageProps) {
-  const { id } = await params;
+  const raw = await params;
+  const id = typeof raw.id === 'string' ? raw.id.trim() : '';
 
   if (!id) {
     return <Loading />;
   }
-
-  console.log('params id', id);
 
   return <StartupDetailPage id={id} />;
 }

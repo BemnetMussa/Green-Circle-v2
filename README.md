@@ -1,4 +1,4 @@
-# Project Title: Green Cricle — Verified Startup Ecosystem Platform
+# Project Title: Green Circle — Ethiopian Startup Discovery Platform
 
 ## Contributors
 - Alemayehu Dabi *(Registered participant)*
@@ -7,21 +7,20 @@
 ## Project Synopsis
 
 ### Problem Statement
-Ethiopian startups lack visibility, official recognition, and access to government support provided under the new Startup Law. There’s no centralized digital system for identifying real startups or connecting them with government programs or diaspora support. As a result, trust is low and growth is slow.
+Ethiopian startups lack visibility and access to capital. There's no centralized way for investors and partners to discover who's building, at what stage, and how to connect. As a result, founders miss funding opportunities and investors miss deals.
 
 ### Planned Solution
 We will build a web platform where:
-- Startups register and verify team identity using Fayda Digital ID.
-- Verified startups submit applications to be officially recognized under the startup law.
-- Approved startups get listed publicly as “Verified Ethiopian Startups.”
-- Diaspora, investors, and organizations can browse startups, offer investment, mentorship, or collaboration.
+- Startups create profiles to showcase their team, traction, and funding needs.
+- Founders get discovered by investors, diaspora, and ecosystem partners.
+- Investors browse a curated directory with clear signals on stage, sector, and investment readiness.
+- Partners connect directly with founders for capital, mentorship, and collaboration.
 
 ### Expected Outcome
-- Trusted, visible ecosystem of verified Ethiopian startups.
-- A centralized, government-aligned database.
-- Simplified access to legal and financial benefits for startups.
-- Improved investment confindece and mentorship from diaspora and local partners.
-- Reduced fraud and duplication via digital ID-based validation.
+- Visible ecosystem of Ethiopian startups discoverable by global investors.
+- Centralized directory with clear investment signals (stage, sector, traction).
+- Direct founder-investor connections that lead to funded deals.
+- Improved investment flow and strategic partnerships for Ethiopian founders.
 
 ### Fayda's Role
 Fayda will be used to:

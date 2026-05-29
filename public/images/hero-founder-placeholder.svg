@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1067" viewBox="0 0 800 1067" role="img" aria-labelledby="title desc">
+  <title id="title">Hero portrait placeholder</title>
+  <desc id="desc">Abstract frame for layout preview only. Not a photograph of a person.</desc>
+  <rect width="800" height="1067" fill="#EAE3D2"/>
+  <rect x="32" y="32" width="736" height="1003" rx="20" fill="#F4EFE4" stroke="#D9D2C1" stroke-width="3"/>
+  <path fill="none" stroke="#3A7D55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" d="M 400 320 Q 520 300 560 400 T 520 560 T 400 620 T 280 520 T 320 360 T 400 320"/>
+  <text x="400" y="780" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="600" fill="#5E584E">Portrait area</text>
+  <text x="400" y="820" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#948C7E">Replace with a licensed founder photo</text>
+</svg>

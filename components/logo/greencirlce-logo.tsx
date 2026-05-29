@@ -1,34 +1,111 @@
 import Link from 'next/link';
 
-interface LogoProps {
-    variant?: 'default' | "white"
-}
-export function Logo({variant = 'default'}: LogoProps) {
+type Variant = 'default' | 'white' | 'ink';
 
-    const color = variant === "default" ? "text-slate-900" : "text-white"
+interface LogoProps {
+  variant?: Variant;
+  /** When true, render only the mark (no wordmark). Used by favicon, mobile drawer, avatars. */
+  markOnly?: boolean;
+  className?: string;
+}
+
+/**
+ * Green Circle wordmark — same logic as always:
+ *   Green (ink, medium) + Circle (forest, semibold) + hand scribble behind Circle only.
+ *
+ * Typography is sans (registry / system), not display serif — reads as infrastructure,
+ * not a magazine masthead.
+ */
+export function Logo({
+  variant = 'default',
+  markOnly = false,
+  className = '',
+}: LogoProps) {
+  const greenColor =
+    variant === 'default' ? 'text-ink' : variant === 'ink' ? 'text-ink' : 'text-paper';
+  const circleColor =
+    variant === 'default'
+      ? 'text-forest'
+      : variant === 'ink'
+      ? 'text-ink'
+      : 'text-paper';
+  const scribbleColor =
+    variant === 'default'
+      ? 'text-forest'
+      : variant === 'ink'
+      ? 'text-ink'
+      : 'text-paper';
+
+  if (markOnly) {
     return (
-         <Link href="/" className="inline-block py-2">
-      <h1 className={`text-2xl font-extrabold tracking-tight ${color}`}>
-        Green
-        <span className="relative ml-2 inline-block text-emerald-600">
+      <Link
+        href="/"
+        aria-label="Green Circle"
+        className={`inline-flex items-center ${className}`}
+      >
+        <Mark className={`h-8 w-8 ${scribbleColor}`} />
+      </Link>
+    );
+  }
+
+  const size =
+    'text-[1.4375rem] sm:text-[1.5rem] leading-none tracking-[-0.035em]';
+
+  return (
+    <Link
+      href="/"
+      aria-label="Green Circle — home"
+      className={`inline-block py-2 group font-sans ${className}`}
+    >
+      <span className={`inline-flex items-baseline ${size}`}>
+        <span className={`font-medium ${greenColor}`}>Green</span>
+        <span className={`relative ml-[0.35em] font-semibold ${circleColor}`}>
           Circle
-          
-          {/* The Hand-Drawn Circle a   round the text */}
-          <svg 
-            className="absolute -top-2 -left-3 -right-3 -bottom-2 -z-10 h-[130%] w-[140%] text-emerald-500" 
-            viewBox="0 -2 100 100" 
+          <svg
+            aria-hidden
+            className={`pointer-events-none absolute -left-[0.55em] -right-[0.55em] -top-[0.35em] -bottom-[0.35em] -z-10 h-[145%] w-[120%] ${scribbleColor} opacity-55 transition-opacity duration-200 group-hover:opacity-[0.88]`}
+            viewBox="0 0 100 100"
             preserveAspectRatio="none"
           >
-            <path 
-              d="M10,50 Q20,5 50,5 T90,50 T50,95 T10,50" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="3" 
-              className="opacity-20"
+            <path
+              d="M 9 52 Q 16 8 50 6 T 91 50 T 49 94 T 8 50"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.85"
+              strokeLinecap="round"
             />
           </svg>
         </span>
-      </h1>
+      </span>
     </Link>
-    )
+  );
+}
+
+/**
+ * Standalone scribble mark — favicon, mobile drawer, OG, fallbacks.
+ */
+export function Mark({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className={className}
+      role="img"
+      aria-hidden
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <path
+        d="M 18 52
+           Q 22 16 52 14
+           T 86 50
+           T 50 86
+           T 18 52
+           Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }

@@ -72,7 +72,7 @@ export default function LoginForm() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center space-x-2">
              <span className="text-xl font-semibold text-gray-900">
-            <span className="text-green-500">Green</span> Circle
+            <span className="text-primary">Green</span> Circle
           </span>
           </Link>
         </div>
@@ -126,14 +126,14 @@ export default function LoginForm() {
                 </div>
                 <Link
                   href="#"
-                  className="text-sm text-emerald-600 hover:text-emerald-700"
+                  className="text-sm text-primary hover:text-primary/90"
                 >
                   Forgot password?
                 </Link>
               </div>
               <Button
                 type="submit"
-                className="w-full bg-emerald-500 hover:bg-emerald-600"
+                className="w-full bg-primary/100 hover:bg-primary"
               >
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
@@ -143,7 +143,7 @@ export default function LoginForm() {
               Don&apos;t have an account?{' '}
               <Link
                 href="/register"
-                className="font-medium text-emerald-600 hover:text-emerald-700"
+                className="font-medium text-primary hover:text-primary/90"
               >
                 Sign up
               </Link>

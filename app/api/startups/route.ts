@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDB } from '@/lib/db';
+import { serializeStartupId } from '@/lib/serialize-startup-id';
 import { IUser, User } from '@/models/user';
 import { z } from 'zod';
 import { StartupZodSchema } from '@/zod-validator/validator';
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
       founderPhone: formData.founderPhone || '',
       founderBio: formData.founderBio || '',
       revenue: formData.revenue || '',
+      stage: formData.stage || '',
       founders: [user._id],
       status: 'pending',
     });
@@ -110,6 +112,7 @@ export async function GET(req: NextRequest) {
       'location',
       'foundedYear',
       'status',
+      'stage',
     ];
 
     let filters: any = {};
@@ -121,7 +124,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (session?.user.role !== 'admin') {
-      filters.status = { $in: ['approved', 'pending'] };
+      filters.status = { $in: ['approved', 'pending', 'active'] };
     }
 
     // Handle allowed filters
@@ -167,8 +170,12 @@ export async function GET(req: NextRequest) {
       filters.founderEmail = { $regex: founderEmail, $options: 'i' };
     }
 
-    // Fetch startups
-    const startups = await Startup.find(filters);
+    // Lean + explicit string _ids so client links are never `/startups/` (empty segment).
+    const docs = await Startup.find(filters).lean();
+    const startups = docs.map((doc) => ({
+      ...doc,
+      _id: serializeStartupId(doc._id),
+    }));
 
     return NextResponse.json({
       message: 'Startups retrieved successfully.',

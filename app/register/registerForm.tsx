@@ -12,6 +12,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SignUpInput, SignUpSchema } from '@/zod-validator/validator';
@@ -26,10 +33,17 @@ export default function RegisterForm() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<SignUpInput>({
     resolver: zodResolver(SignUpSchema),
+    defaultValues: {
+      role: 'user',
+    },
   });
+
+  const selectedRole = watch('role');
 
   const onSubmit = async (SignUpData: SignUpInput) => {
     try {
@@ -38,7 +52,8 @@ export default function RegisterForm() {
           name: SignUpData.name,
           email: SignUpData.email,
           password: SignUpData.password,
-          callbackURL: '/dashboard', // A URL to redirect to after the user verifies their email (optional)
+          role: SignUpData.role,
+          callbackURL: '/dashboard',
         },
         {
           onRequest: () => {
@@ -72,7 +87,7 @@ export default function RegisterForm() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center space-x-2">
             <span className="text-xl font-semibold text-gray-900">
-            <span className="text-green-500">Green</span> Circle
+            <span className="text-primary">Green</span> Circle
           </span>
           </Link>
         </div>
@@ -83,7 +98,7 @@ export default function RegisterForm() {
               Create Account
             </CardTitle>
             <CardDescription>
-              Join Ethiopia&apos;s startup ecosystem and discover verified
+              Join Ethiopia&apos;s startup ecosystem and discover real
               opportunities
             </CardDescription>
           </CardHeader>
@@ -148,20 +163,40 @@ export default function RegisterForm() {
                 )}
               </div>
 
+              <div className="space-y-2">
+                <Label>I am a...</Label>
+                <Select
+                  value={selectedRole}
+                  onValueChange={(value) => setValue('role', value as 'user' | 'startup' | 'investor')}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Ecosystem Member (Browse & Discover)</SelectItem>
+                    <SelectItem value="startup">Startup Founder (List my company)</SelectItem>
+                    <SelectItem value="investor">Investor (Access deal flow)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && (
+                  <p className="text-red-500 font-medium">{errors.role.message}</p>
+                )}
+              </div>
+
               <div className="flex items-center space-x-2">
                 <Checkbox id="terms" />
                 <Label htmlFor="terms" className="text-sm text-gray-800">
                   I agree to the{' '}
                   <Link
                     href="#"
-                    className="text-emerald-600 hover:text-emerald-700"
+                    className="text-primary hover:text-primary/90"
                   >
                     Terms of Service
                   </Link>{' '}
                   and{' '}
                   <Link
                     href="#"
-                    className="text-emerald-600 hover:text-emerald-700"
+                    className="text-primary hover:text-primary/90"
                   >
                     Privacy Policy
                   </Link>
@@ -170,7 +205,7 @@ export default function RegisterForm() {
 
               <Button
                 type="submit"
-                className="w-full bg-emerald-500 hover:bg-emerald-600"
+                className="w-full bg-primary/100 hover:bg-primary"
               >
                 {isLoading ? 'Signing up...' : 'Create Account'}
               </Button>
@@ -181,7 +216,7 @@ export default function RegisterForm() {
                 Already have an account?{' '}
                 <Link
                   href="/login"
-                  className="font-medium text-emerald-600 hover:text-emerald-700"
+                  className="font-medium text-primary hover:text-primary/90"
                 >
                   Sign in
                 </Link>

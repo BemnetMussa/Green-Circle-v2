@@ -147,7 +147,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, data }) => {
     <div className="w-64 bg-white shadow-lg border-r">
       <div className="p-6 border-b">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
             <Building2 className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -225,7 +225,7 @@ const OverviewContent: React.FC<OverviewContentProps> = ({
             subtext: `${Math.round(
               (stats.verifiedStartups / stats.totalStartups) * 100
             )}% of total`,
-            iconClass: 'text-green-600',
+            iconClass: 'text-primary',
           },
           {
             title: 'Pending Verifications',
@@ -279,8 +279,8 @@ const OverviewContent: React.FC<OverviewContentProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {sectors.map((sector) => (
-                <div key={sector.name} className="space-y-2">
+              {sectors.map((sector, idx) => (
+                <div key={`${sector.name}-${idx}`} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{sector.name}</span>
                     <span className="text-sm text-muted-foreground">
@@ -289,7 +289,7 @@ const OverviewContent: React.FC<OverviewContentProps> = ({
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-green-600 h-2 rounded-full"
+                      className="bg-primary h-2 rounded-full"
                       style={{ width: `${sector.percentage}%` }}
                     ></div>
                   </div>
@@ -307,7 +307,7 @@ const OverviewContent: React.FC<OverviewContentProps> = ({
             <div className="space-y-4">
               {activities.map((activity, index) => (
                 <div key={index} className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{activity.action}</p>
                     <p className="text-sm text-gray-600 truncate">
@@ -401,13 +401,13 @@ const VerificationContent: React.FC<VerificationContentProps> = ({
         );
       case 'under_review':
         return (
-          <Badge variant="outline" className="text-blue-600 border-blue-600">
+          <Badge variant="outline" className="text-primary border-blue-600">
             Under Review
           </Badge>
         );
       case 'approved':
         return (
-          <Badge variant="default" className="bg-green-600">
+          <Badge variant="default" className="bg-primary">
             Approved
           </Badge>
         );
@@ -497,8 +497,8 @@ const VerificationContent: React.FC<VerificationContentProps> = ({
           </TableHeader>
           <TableBody>
             {filteredStartups.length > 0 ? (
-              filteredStartups.map((startup) => (
-                <TableRow key={startup._id}>
+              filteredStartups.map((startup, idx) => (
+                <TableRow key={`${startup._id}-${idx}`}>
                   <TableCell className="font-medium">{startup.name}</TableCell>
                   <TableCell>
                     {Array.isArray(startup.founders) &&
@@ -642,7 +642,7 @@ export default function AdminDashboard() {
                 {activeTab === 'analytics' && 'Platform Analytics'}
               </h2>
               <p className="text-gray-600">
-                Ministry of Innovation and Technology - Ethiopia
+                Green Circle · Editors&apos; Room
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -691,13 +691,13 @@ export default function AdminDashboard() {
                       title: 'Monthly Growth',
                       value: `+${dashboardStats.monthlyGrowth}%`,
                       subtext: 'New startups this month',
-                      className: 'text-green-600',
+                      className: 'text-primary',
                     },
                     {
                       title: 'Investment Flow',
                       value: `$${(dashboardStats.totalInvestment / 1000000).toFixed(1)}M`, // Using totalInvestment from fetched stats
                       subtext: 'Total investment recorded', // Updated subtext
-                      className: 'text-blue-600',
+                      className: 'text-primary',
                     },
                     {
                       title: 'Success Rate',
@@ -752,7 +752,7 @@ export default function AdminDashboard() {
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-blue-600 h-2 rounded-full"
+                              className="bg-primary h-2 rounded-full"
                               style={{ width: `${region.percentage}%` }}
                             ></div>
                           </div>

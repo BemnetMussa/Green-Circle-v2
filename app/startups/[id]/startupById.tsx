@@ -2,385 +2,377 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { Startup as StartupType } from '@/types';
-import { getStartupById } from '@/lib/call-api/call-api';
-import { Header } from '@/components/header';
-import { ImageWithFallback } from '@/components/image-withfallback';
-import { Target, Quote, Zap } from 'lucide-react';
-import { ExternalLink } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-
 import {
   ArrowLeft,
-  Calendar,
   Globe,
-  MapPin,
-  Users,
   Mail,
-  Phone,
-  Building2,
-  TrendingUp,
-  CheckCircle2,
   Linkedin,
-  Share2,
-  ShieldCheck,
-  Briefcase
+  ArrowRight,
+  TrendingUp,
+  MapPin,
+  Calendar,
+  Users,
+  CheckCircle2,
+  Image as ImageIcon,
+  AlertCircle,
 } from 'lucide-react';
-
+import type { Startup as StartupType } from '@/types';
+import { getStartupById } from '@/lib/call-api/call-api';
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
+import { ImageWithFallback } from '@/components/image-withfallback';
+import { displayStartupStage } from '@/lib/startup-stage';
 import Loading from '@/app/loading';
 
 export default function StartupDetailPage({ id }: { id: string }) {
   const [startup, setStartup] = useState<StartupType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFoundFlag, setNotFoundFlag] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await getStartupById(id);
-        if (!data) return notFound();
-        setStartup(data);
-      } finally {
-        setLoading(false);
+    let cancelled = false;
+    setFetchError(null);
+    setNotFoundFlag(false);
+    setStartup(null);
+    setLoading(true);
+
+    (async () => {
+      const result = await getStartupById(id);
+      if (cancelled) return;
+      if (result.ok) {
+        setStartup(result.startup);
+      } else if (result.reason === 'not_found') {
+        setNotFoundFlag(true);
+      } else {
+        setFetchError(result.message);
       }
+      setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    load();
-  }, [id]);
+  }, [id, retryToken]);
 
   if (loading) return <Loading />;
+  if (notFoundFlag) return notFound();
+  if (fetchError) {
+    return (
+      <StartupFetchErrorView
+        message={fetchError}
+        onRetry={() => {
+          setFetchError(null);
+          setLoading(true);
+          setRetryToken((t) => t + 1);
+        }}
+      />
+    );
+  }
   if (!startup) return notFound();
 
-  // Data Safety
-  const gallery = (startup as any).images || [];
-  const video = (startup as any).video || null;
-  const achievements = (startup as any).achievements || [];
-  const logoUrl = startup.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(startup.name)}&background=random&size=200`;
-    return (
-    <section className="min-h-screen bg-slate-50 font-sans pb-20">
-      <Header />
+  const achievements = normalizeAchievements(startup.achievements);
+  const initials = getInitials(startup.name);
+  const stageLabel = displayStartupStage(startup.stage);
 
-      {/* --- HERO SECTION (Matches Card Style) --- */}
-      <div className="relative w-full bg-slate-900">
-        
-        {/* 1. Dark Gradient Banner */}
-        <div className="relative h-64 md:h-80 w-full bg-gradient-to-r from-slate-800 to-slate-900 overflow-hidden">
-          {/* Pattern Overlay */}
-          <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-          
-          {/* Navigation (Absolute Top Left) */}
-          <div className="absolute top-6 left-4 md:left-8 z-20">
-            <Button asChild variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-sm">
-              <Link href="/startups" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                <span>Back to Registry</span>
-              </Link>
-            </Button>
+  return (
+    <div className="min-h-screen bg-paper flex flex-col">
+      <Header currentPage="startups" />
+
+      <main className="flex-1 pb-32">
+        {/* Navigation & Context */}
+        <div className="mx-auto max-w-6xl px-5 pt-8 sm:px-8 mb-12">
+          <Link
+            href="/startups"
+            className="group inline-flex items-center gap-2 text-sm font-medium text-ink-muted hover:text-ink transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to directory
+          </Link>
+        </div>
+
+        <section className="mx-auto max-w-6xl px-5 sm:px-8">
+          {/* Header Row */}
+          <div className="flex flex-col md:flex-row gap-8 lg:gap-10 items-start">
+            <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-2xl bg-paper-deep border border-rule flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+              {startup.logo ? (
+                <ImageWithFallback
+                  src={startup.logo}
+                  alt={`${startup.name} logo`}
+                  width={128}
+                  height={128}
+                  className="w-full h-full object-contain p-3"
+                />
+              ) : (
+                <span className="font-sans font-semibold text-3xl text-ink-faint">
+                  {initials}
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-forest">
+                  {startup.sector || 'Technology startup'}
+                </span>
+              </div>
+              
+              <h1 className="font-sans text-4xl sm:text-5xl lg:text-[3.5rem] font-bold tracking-tight leading-none text-ink text-balance mb-5">
+                {startup.name}
+              </h1>
+              
+              <p className="text-xl sm:text-[1.35rem] font-medium text-ink-muted leading-relaxed max-w-3xl text-pretty">
+                {startup.pitch || "Startup pitch and core mission currently being compiled."}
+              </p>
+
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                {/* Primary CTA: Revenue-driving connection request */}
+                <button
+                  className="h-11 px-6 inline-flex items-center justify-center gap-2 rounded-lg bg-forest hover:bg-forest-soft text-paper text-sm font-medium shadow-sm transition-all active:scale-[0.98]"
+                  onClick={() => alert('Connect feature coming soon. Express interest in this startup to unlock full founder contact details.')}
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Apply to Connect
+                </button>
+
+                {startup.website && (
+                  <Link
+                    href={startup.website}
+                    target="_blank"
+                    className="h-11 px-6 inline-flex items-center justify-center gap-2 rounded-lg bg-ink hover:bg-ink-muted text-paper text-sm font-medium shadow-sm transition-all active:scale-[0.98]"
+                  >
+                    <Globe className="h-4 w-4" />
+                    Visit website
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Verified Badge (Absolute Top Right) */}
-          {startup.status === 'approved' && (
-            <div className="absolute top-6 right-4 md:right-8 z-20">
-               <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-none gap-1.5 px-3 py-1.5 text-sm shadow-sm backdrop-blur-sm">
-                 <ShieldCheck className="h-4 w-4" /> Verified Active
-               </Badge>
-            </div>
-          )}
-        </div>
+          <hr className="my-14 border-t-2 border-rule border-dashed" />
 
-        {/* 2. Overlapping Identity Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative -mt-20 md:-mt-24 mb-8">
-           <div className="flex flex-col md:flex-row items-end gap-6">
+          {/* Quick Stats Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+            <Stat label="Current Stage" value={stageLabel || 'Undisclosed'} icon={<TrendingUp />} />
+            <Stat label="Founded" value={startup.foundedYear?.toString() || '—'} icon={<Calendar />} />
+            <Stat label="Team Size" value={startup.employees || '—'} icon={<Users />} />
+            <Stat label="Location" value={startup.location || '—'} icon={<MapPin />} />
+          </div>
+
+          {/* Main Content Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-20">
+            
+            {/* Left Column (Description & Gallery) */}
+            <div className="lg:col-span-8 space-y-16">
               
-              {/* Logo Box (Square, White Border) */}
-              <div className="relative h-32 w-32 md:h-40 md:w-40 rounded-xl border-4 border-white bg-white shadow-md overflow-hidden shrink-0">
-                 <ImageWithFallback
-                    src={logoUrl}
-                    alt={startup.name}
-                    fill
-                    className="object-cover"
-                 />
-              </div>
-
-              {/* Text Info (Sits on top of the banner/white background transition) */}
-              <div className="flex-1 pb-2 w-full">
-                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    
-                    <div>
-                       <div className="flex items-center gap-3 mb-2">
-                          <h1 className="text-3xl md:text-5xl font-bold text-slate-900 md:text-white drop-shadow-md md:drop-shadow-lg">
-                             {startup.name}
-                          </h1>
-                       </div>
-                       <div className="flex flex-wrap items-center gap-3 text-slate-600 md:text-slate-200 font-medium">
-                          <span className="flex items-center gap-1.5">
-                             <Briefcase className="h-4 w-4 opacity-80" /> {startup.sector}
-                          </span>
-                          <span className="hidden md:inline">•</span>
-                          <span className="flex items-center gap-1.5">
-                             <MapPin className="h-4 w-4 opacity-80" /> {startup.location}
-                          </span>
-                       </div>
-                    </div>
-
-                    {/* Primary Call to Action */}
-                    <div className="flex gap-3">
-                       <Button variant="outline" className="bg-white border-slate-200 shadow-sm text-slate-700">
-                          <Share2 className="mr-2 h-4 w-4" /> Share
-                       </Button>
-                       {startup.website && (
-                         <Button asChild className="bg-slate-900 hover:bg-emerald-600 text-white border-none shadow-md transition-colors">
-                           <Link href={startup.website} target="_blank">
-                             <Globe className="mr-2 h-4 w-4" /> Visit Website
-                           </Link>
-                         </Button>
-                       )}
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </div>
-      </div>
-
-      {/* --- MAIN CONTENT GRID --- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-          {/* LEFT COLUMN: Narrative & Team (8 Columns) */}
-          <div className="lg:col-span-8 space-y-8">
-
-            {/* PROBLEM / SOLUTION (Executive Summary) */}
-            <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-               <div className="bg-slate-50/50 border-b border-slate-100 px-6 py-4 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <Target className="h-5 w-5 text-blue-600" />
-                    The Mission & Solution
-                  </h2>
-               </div>
-               <div className="p-6 md:p-8">
-                  <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-lg">
-                    {/* Visual formatting for the description */}
-                    <div className="flex gap-4 items-start">
-                       <Quote className="h-8 w-8 text-slate-300 shrink-0 transform scale-x-[-1]" />
-                       <p className="mt-0">{startup.description}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Visual 'Tags' for context */}
-                  <div className="mt-6 flex gap-2">
-                     <Badge variant="outline" className="text-slate-600 border-slate-300">
-                        <Zap className="h-3 w-3 mr-1 text-amber-500" /> Tech-Enabled
-                     </Badge>
-                     <Badge variant="outline" className="text-slate-600 border-slate-300">
-                        {startup.sector}
-                     </Badge>
-                  </div>
-               </div>
-            </section>
-
-            {/* TRACTION / MILESTONES */}
-            {achievements.length > 0 && (
-              <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="bg-slate-50/50 border-b border-slate-100 px-6 py-4">
-                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-emerald-600" />
-                    Key Milestones & Traction
-                  </h2>
-                </div>
-                <div className="p-6">
-                  <div className="grid gap-4">
-                     {achievements.map((item: string, i: number) => (
-                       <div key={i} className="flex items-start gap-4 p-4 rounded-lg bg-slate-50 border border-slate-100 transition-colors hover:border-emerald-200 hover:bg-emerald-50/30">
-                          <div className="mt-1 h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-slate-900">{item}</p>
-                          </div>
-                       </div>
-                     ))}
-                  </div>
+              <section>
+                <h2 className="font-sans text-2xl font-bold tracking-tight text-ink mb-6">About the startup</h2>
+                <div className="text-lg leading-[1.75] text-ink-muted space-y-5 text-pretty">
+                  {startup.description ? (
+                    <p>{startup.description}</p>
+                  ) : (
+                    <p className="italic text-ink-faint">Background and product information coming soon.</p>
+                  )}
                 </div>
               </section>
-            )}
 
-            {/* FOUNDERS SECTION */}
-            <section>
-               <h2 className="text-xl font-bold text-slate-900 mb-5 flex items-center gap-2">
-                  <Users className="h-5 w-5 text-slate-500" />
-                  Leadership Team
-               </h2>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {startup.founders.map((f: any, i: number) => (
-                     <Card key={i} className="border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 group">
-                        <CardContent className="p-6">
-                           <div className="flex items-start gap-4 mb-4">
-                              <div className="h-16 w-16 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 relative">
-                                 <ImageWithFallback 
-                                    src={f.image} // Pass individual founder image
-                                    fallbackSrc={`https://ui-avatars.com/api/?name=${encodeURIComponent(f.name)}&background=random`}
-                                    fill 
-                                    alt={f.name}
-                                    className="object-cover"
-                                 />
-                              </div>
-                              <div className="min-w-0">
-                                 <h3 className="font-bold text-lg text-slate-900 truncate group-hover:text-blue-700 transition-colors">{f.name}</h3>
-                                 <p className="text-sm font-medium text-blue-600 mb-1">{f.role || "Co-Founder"}</p>
-                                 <div className="flex gap-2">
-                                    {f.linkedin && (
-                                       <a href={f.linkedin} target="_blank" className="text-slate-400 hover:text-blue-700 transition-colors">
-                                          <Linkedin className="h-4 w-4" />
-                                       </a>
-                                    )}
-                                    {f.email && (
-                                       <a href={`mailto:${f.email}`} className="text-slate-400 hover:text-emerald-600 transition-colors">
-                                          <Mail className="h-4 w-4" />
-                                       </a>
-                                    )}
-                                 </div>
-                              </div>
-                           </div>
-                           
-                           {/* Bio Text */}
-                           <div className="text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-4 line-clamp-3">
-                              {f.bio ? f.bio : "Entrepreneur focused on solving local challenges through technology."}
-                           </div>
-                        </CardContent>
-                     </Card>
-                  ))}
-               </div>
-            </section>
-            
-            {/* Gallery (Small) */}
-            {gallery.length > 0 && (
-               <div className="pt-4 border-t border-slate-200">
-                  <p className="text-sm font-semibold text-slate-500 mb-4 uppercase tracking-wider">Product Visuals</p>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                     {gallery.map((img: string, i: number) => (
-                        <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer hover:opacity-90 transition-opacity">
-                           <ImageWithFallback src={img} alt="Product" fill className="object-cover" sizes="150px" />
+              <section>
+                <h2 className="font-sans text-2xl font-bold tracking-tight text-ink mb-6">Visual Overview</h2>
+                {startup.images && startup.images.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {startup.images.map((img, i) => (
+                      <div key={i} className={`relative aspect-video rounded-xl overflow-hidden border border-rule/50 bg-paper-deep ${i === 0 ? 'md:col-span-2' : ''}`}>
+                         <ImageWithFallback src={img} alt={`${startup.name} gallery image ${i + 1}`} fill className="object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-paper-tint border border-rule border-dashed p-12 flex flex-col items-center justify-center text-center">
+                    <ImageIcon className="h-8 w-8 text-ink-faint mb-3" strokeWidth={1.5} />
+                    <p className="text-[0.95rem] font-medium text-ink-muted">No images provided yet.</p>
+                  </div>
+                )}
+              </section>
+
+            </div>
+
+            {/* Right Column (Founders & Track Record) */}
+            <aside className="lg:col-span-4 space-y-12">
+              
+              <section>
+                <h2 className="font-sans text-xl font-bold tracking-tight text-ink mb-6">The Founders</h2>
+                {startup.founders && startup.founders.length > 0 ? (
+                  <div className="space-y-8">
+                    {startup.founders.map((founder, i) => (
+                      <div key={i} className="flex flex-col gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="h-14 w-14 rounded-full overflow-hidden bg-paper-deep border border-rule shrink-0 relative">
+                             {founder.image ? (
+                               <ImageWithFallback src={founder.image} alt={founder.name} fill className="object-cover" sizes="56px" />
+                             ) : (
+                               <div className="h-full w-full flex items-center justify-center font-sans font-semibold text-lg text-ink-faint">
+                                 {getInitials(founder.name)}
+                               </div>
+                             )}
+                          </div>
+                          <div>
+                            <h3 className="font-sans text-base font-bold text-ink">{founder.name || 'Anonymous'}</h3>
+                            <p className="text-[11px] font-bold uppercase tracking-widest text-forest/80 mt-0.5">{founder.role || 'Founder'}</p>
+                          </div>
                         </div>
+                        
+                        {founder.bio && (
+                          <p className="text-sm leading-relaxed text-ink-muted">
+                            {founder.bio}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center gap-3">
+                           {founder.email && (
+                             <a href={`mailto:${founder.email}`} className="text-ink-muted hover:text-ink transition-colors p-1" title="Email">
+                               <Mail className="h-4 w-4" strokeWidth={2} />
+                             </a>
+                           )}
+                           {founder.linkedin && (
+                             <a href={founder.linkedin} target="_blank" className="text-ink-muted hover:text-ink transition-colors p-1" title="LinkedIn">
+                               <Linkedin className="h-4 w-4" strokeWidth={2} />
+                             </a>
+                           )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-ink-muted italic">Founder profiles pending.</p>
+                )}
+              </section>
+
+              {achievements.length > 0 && (
+                <section>
+                  <h2 className="font-sans text-xl font-bold tracking-tight text-ink mb-6">Track Record</h2>
+                  <ul className="space-y-4">
+                     {achievements.map((item, i) => (
+                       <li key={i} className="flex gap-3">
+                          <CheckCircle2 className="h-5 w-5 text-forest shrink-0 mt-0.5" strokeWidth={1.5} />
+                          <span className="text-[0.95rem] leading-relaxed text-ink-muted">
+                            {item}
+                          </span>
+                       </li>
                      ))}
-                  </div>
-               </div>
-            )}
+                  </ul>
+                </section>
+              )}
 
+              <div className="pt-8 border-t border-rule text-sm text-ink-faint">
+                Profile updated {new Date(startup.updatedAt).toLocaleDateString()}
+              </div>
+
+            </aside>
           </div>
+        </section>
+      </main>
 
-          {/* RIGHT COLUMN: Contact & Actions (4 Columns) */}
-          <div className="lg:col-span-4 space-y-6">
-            
-            {/* CONTACT HUB CARD */}
-            <Card className="border-blue-200 shadow-sm bg-blue-50/30 sticky top-24">
-               <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-bold text-blue-900 flex items-center gap-2">
-                     <Mail className="h-4 w-4" /> Connect with {startup.name}
-                  </CardTitle>
-               </CardHeader>
-               <CardContent className="grid gap-4">
-                  
-                  {/* Website Button */}
-                  {startup.website && (
-                     <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all">
-                        <Link href={startup.website} target="_blank">
-                           <ExternalLink className="mr-2 h-4 w-4" /> Visit Website
-                        </Link>
-                     </Button>
-                  )}
-
-                  <Separator className="bg-blue-200/50" />
-
-                  {/* Contact Details List */}
-                  <div className="space-y-3">
-                     {startup.contact?.email ? (
-                        <div className="flex items-center gap-3 text-sm p-2 rounded-md hover:bg-white transition-colors border border-transparent hover:border-slate-100 group/item">
-                           <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                              <Mail className="h-4 w-4" />
-                           </div>
-                           <div className="overflow-hidden">
-                              <p className="text-xs text-slate-500 font-medium">Email Inquiries</p>
-                              <a href={`mailto:${startup.contact.email}`} className="font-semibold text-slate-900 truncate block hover:underline">
-                                 {startup.contact.email}
-                              </a>
-                           </div>
-                        </div>
-                     ) : (
-                        <div className="flex items-center gap-3 text-sm text-slate-400 p-2">
-                           <Mail className="h-4 w-4" /> No email provided
-                        </div>
-                     )}
-
-                     {startup.contact?.phone && (
-                        <div className="flex items-center gap-3 text-sm p-2 rounded-md hover:bg-white transition-colors border border-transparent hover:border-slate-100">
-                           <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                              <Phone className="h-4 w-4" />
-                           </div>
-                           <div>
-                              <p className="text-xs text-slate-500 font-medium">Direct Line</p>
-                              <a href={`tel:${startup.contact.phone}`} className="font-semibold text-slate-900 hover:underline">
-                                 {startup.contact.phone}
-                              </a>
-                           </div>
-                        </div>
-                     )}
-
-                     <div className="flex items-center gap-3 text-sm p-2">
-                        <div className="h-8 w-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                           <MapPin className="h-4 w-4" />
-                        </div>
-                        <div>
-                           <p className="text-xs text-slate-500 font-medium">Headquarters</p>
-                           <p className="font-medium text-slate-900">{startup.location}</p>
-                        </div>
-                     </div>
-                  </div>
-               </CardContent>
-            </Card>
-
-            {/* Quick Summary Card */}
-            <Card className="border-slate-200 shadow-sm">
-               <CardHeader className="pb-3 border-b border-slate-50">
-                  <CardTitle className="text-sm font-semibold text-slate-600 uppercase tracking-wider">
-                     Classification
-                  </CardTitle>
-               </CardHeader>
-               <CardContent className="pt-4 space-y-4">
-                  <div>
-                     <p className="text-xs text-slate-500 mb-1">Primary Sector</p>
-                     <p className="font-medium text-slate-900">{startup.sector}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                       <p className="text-xs text-slate-500 mb-1">Founded</p>
-                       <p className="font-medium text-slate-900">{startup.foundedYear || 'N/A'}</p>
-                    </div>
-                    <div>
-                       <p className="text-xs text-slate-500 mb-1">Team Size</p>
-                       <p className="font-medium text-slate-900">{startup.employees || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div>
-                     <p className="text-xs text-slate-500 mb-1">Operational Status</p>
-                     <div className="flex items-center gap-2">
-                        <span className="relative flex h-2.5 w-2.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                        </span>
-                        <span className="text-sm font-medium text-slate-900">Active / Operational</span>
-                     </div>
-                  </div>
-               </CardContent>
-            </Card>
-
-          </div>
-
-        </div>
+      {/* Footer CTA */}
+      <div className="bg-paper-tint border-t border-rule py-16 text-center">
+        <h3 className="font-sans text-xl font-bold text-ink mb-3">Discover more companies</h3>
+        <p className="text-sm text-ink-muted mb-8">Green Circle is the living registry of Ethiopian innovation.</p>
+        <Link
+          href="/startups"
+          className="inline-flex items-center gap-2 h-11 px-6 rounded-lg border border-ink text-ink font-medium hover:bg-ink hover:text-paper transition-all"
+        >
+          View full directory
+          <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
-    </section>
+
+      <Footer />
+    </div>
   );
+}
+
+function StartupFetchErrorView({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="min-h-screen bg-paper flex flex-col">
+      <Header currentPage="startups" />
+      <main className="mx-auto flex flex-1 max-w-lg flex-col items-center justify-center px-6 py-20 text-center">
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-rule bg-paper-tint text-forest"
+          aria-hidden
+        >
+          <AlertCircle className="h-6 w-6" strokeWidth={1.5} />
+        </div>
+        <h1 className="mt-6 font-sans text-xl font-semibold tracking-tight text-ink">
+          Couldn&apos;t load this profile
+        </h1>
+        <p className="mt-3 font-sans text-base leading-relaxed text-ink-muted text-pretty">
+          {message}
+        </p>
+        <p className="mt-2 font-sans text-sm leading-relaxed text-ink-faint text-pretty">
+          This usually isn&apos;t about the company being removed — try again, or open the
+          directory from the link below.
+        </p>
+        <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex h-11 items-center justify-center rounded-md bg-forest px-6 font-sans text-sm font-medium text-paper transition-colors hover:bg-forest-soft"
+          >
+            Try again
+          </button>
+          <Link
+            href="/startups"
+            className="inline-flex h-11 items-center justify-center rounded-md border border-ink px-6 font-sans text-sm font-medium text-ink transition-colors hover:bg-paper-tint"
+          >
+            Back to directory
+          </Link>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+
+function Stat({ label, value, icon }: { label: string, value: string, icon: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="h-8 w-8 rounded flex items-center justify-center text-ink-faint border border-rule bg-paper-tint shrink-0">
+        {icon}
+      </div>
+      <div>
+        <p className="text-[10px] uppercase tracking-widest font-bold text-ink-faint mb-1">{label}</p>
+        <p className="font-semibold text-ink leading-tight">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function normalizeAchievements(
+  input: string | string[] | undefined,
+): string[] {
+  if (!input) return [];
+  if (Array.isArray(input)) return input.filter(Boolean);
+  return input
+    .split(/[\n•;]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function getInitials(name: string): string {
+  if (!name) return 'GC';
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join('');
 }
