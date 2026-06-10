@@ -4,6 +4,7 @@ import { connectToDB } from '@/lib/db';
 import { InvestorWatchlist } from '@/models/investor-watchlist';
 import { Startup } from '@/models/start-up';
 import { auth } from '@/lib/auth';
+import { recordWatchlist } from '@/lib/analytics';
 
 // GET - Get investor's watchlist
 export async function GET(req: NextRequest) {
@@ -61,6 +62,8 @@ export async function POST(req: NextRequest) {
       tags: tags || [],
     });
 
+    await recordWatchlist('add', startupId, { userId: user.id, role: user.role });
+
     return NextResponse.json({ success: true, item: watchlistItem });
   } catch (error: any) {
     if (error.code === 11000) {
@@ -94,6 +97,8 @@ export async function DELETE(req: NextRequest) {
       investorId: user.id,
       startupId,
     });
+
+    await recordWatchlist('remove', startupId, { userId: user.id, role: user.role });
 
     return NextResponse.json({ success: true });
   } catch (error) {

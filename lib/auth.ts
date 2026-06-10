@@ -29,6 +29,18 @@ const db = client.db();
 
 export const auth = betterAuth({
   database: mongodbAdapter(db),
+  // Trust whatever local port `next dev` lands on (it auto-increments when 3000
+  // is busy), plus the configured production URL. Without this, logging in from
+  // e.g. http://localhost:3003 while BETTER_AUTH_URL points at :3000 is rejected
+  // as "Invalid origin".
+  trustedOrigins: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'http://localhost:3004',
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+  ],
   emailAndPassword: { enabled: true },
   user: {
     additionalFields: {

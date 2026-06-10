@@ -4,52 +4,29 @@ type Variant = 'default' | 'white' | 'ink';
 
 interface LogoProps {
   variant?: Variant;
-  /** When true, render only the mark (no wordmark). Used by favicon, mobile drawer, avatars. */
   markOnly?: boolean;
   className?: string;
 }
 
-/**
- * Green Circle wordmark — same logic as always:
- *   Green (ink, medium) + Circle (forest, semibold) + hand scribble behind Circle only.
- *
- * Typography is sans (registry / system), not display serif — reads as infrastructure,
- * not a magazine masthead.
- */
 export function Logo({
   variant = 'default',
   markOnly = false,
   className = '',
 }: LogoProps) {
-  const greenColor =
-    variant === 'default' ? 'text-ink' : variant === 'ink' ? 'text-ink' : 'text-paper';
-  const circleColor =
-    variant === 'default'
-      ? 'text-forest'
-      : variant === 'ink'
-      ? 'text-ink'
-      : 'text-paper';
-  const scribbleColor =
-    variant === 'default'
-      ? 'text-forest'
-      : variant === 'ink'
-      ? 'text-ink'
-      : 'text-paper';
+  const isWhite = variant === 'white';
+  const greenColor = isWhite ? 'text-paper' : 'text-ink';
+  const circleColor = variant === 'default' ? 'text-forest' : isWhite ? 'text-paper' : 'text-ink';
+  const scribbleColor = circleColor; 
 
   if (markOnly) {
     return (
-      <Link
-        href="/"
-        aria-label="Green Circle"
-        className={`inline-flex items-center ${className}`}
-      >
+      <Link href="/" aria-label="Green Circle" className={`inline-flex items-center ${className}`}>
         <Mark className={`h-8 w-8 ${scribbleColor}`} />
       </Link>
     );
   }
 
-  const size =
-    'text-[1.4375rem] sm:text-[1.5rem] leading-none tracking-[-0.035em]';
+  const size = 'text-[1.4375rem] sm:text-[1.5rem] leading-none tracking-[-0.035em]';
 
   return (
     <Link
@@ -59,11 +36,14 @@ export function Logo({
     >
       <span className={`inline-flex items-baseline ${size}`}>
         <span className={`font-medium ${greenColor}`}>Green</span>
+        
+        {/* Changed positioning on this span and the SVG inside it */}
         <span className={`relative ml-[0.35em] font-semibold ${circleColor}`}>
           Circle
           <svg
             aria-hidden
-            className={`pointer-events-none absolute -left-[0.55em] -right-[0.55em] -top-[0.35em] -bottom-[0.35em] -z-10 h-[145%] w-[120%] ${scribbleColor} opacity-55 transition-opacity duration-200 group-hover:opacity-[0.88]`}
+            /* Centered directly over the text with controlled percentage sizing */
+            className={`pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[135%] h-[140%] -z-10 ${scribbleColor} opacity-55 transition-opacity duration-200 group-hover:opacity-[0.88]`}
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
           >
@@ -73,17 +53,16 @@ export function Logo({
               stroke="currentColor"
               strokeWidth="2.85"
               strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
             />
           </svg>
         </span>
+
       </span>
     </Link>
   );
 }
 
-/**
- * Standalone scribble mark — favicon, mobile drawer, OG, fallbacks.
- */
 export function Mark({ className = '' }: { className?: string }) {
   return (
     <svg
@@ -105,6 +84,7 @@ export function Mark({ className = '' }: { className?: string }) {
         strokeWidth="6.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
       />
     </svg>
   );

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { StartupZodSchema } from '@/zod-validator/validator';
 import { Startup } from '@/models/start-up';
 import { auth } from '@/lib/auth';
+import { recordSearch, recordFilters } from '@/lib/analytics';
 
 // post start-up
 export async function POST(request: NextRequest) {
@@ -176,6 +177,26 @@ export async function GET(req: NextRequest) {
       ...doc,
       _id: serializeStartupId(doc._id),
     }));
+
+    // Record real search/filter usage so investor "top search terms" and
+    // "popular filters" are backed by data instead of constants. Errors are
+    // swallowed inside the helpers — analytics never blocks the directory.
+    const trackCtx = {
+      userId: session?.user?.id,
+      role: (session?.user as { role?: string } | undefined)?.role,
+      sessionId: req.cookies.get('gc_sid')?.value,
+    };
+    const searchValue = url.searchParams.get('search');
+    if (searchValue) await recordSearch(searchValue, trackCtx);
+    await recordFilters(
+      {
+        sector: url.searchParams.get('sector') || undefined,
+        stage: url.searchParams.get('stage') || undefined,
+        location: url.searchParams.get('location') || undefined,
+        foundedYear: url.searchParams.get('foundedYear') || undefined,
+      },
+      trackCtx
+    );
 
     return NextResponse.json({
       message: 'Startups retrieved successfully.',

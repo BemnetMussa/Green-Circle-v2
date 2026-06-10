@@ -64,23 +64,22 @@ export async function GET() {
       foundingYears[year] = (foundingYears[year] || 0) + 1;
     });
     
-    // Team size distribution
+    // Team size distribution — blank/zero employee counts are "unknown", not 1-3.
     const teamSizeBuckets: Record<string, number> = { '1-3': 0, '4-10': 0, '11-25': 0, '25+': 0 };
     startups.forEach(s => {
-      const employees = parseInt(s.employees || '0', 10);
+      const employees = parseInt(s.employees || '', 10);
+      if (!Number.isFinite(employees) || employees <= 0) return; // unknown size, skip
       if (employees <= 3) teamSizeBuckets['1-3']++;
       else if (employees <= 10) teamSizeBuckets['4-10']++;
       else if (employees <= 25) teamSizeBuckets['11-25']++;
       else teamSizeBuckets['25+']++;
     });
-    
-    // Funding stage progression (startups that have moved stages)
-    const stageVelocity = [
-      { from: 'idea', to: 'pre-seed', count: Math.floor(startups.filter(s => s.stage === 'pre-seed').length * 0.3) },
-      { from: 'pre-seed', to: 'seed', count: Math.floor(startups.filter(s => s.stage === 'seed').length * 0.4) },
-      { from: 'seed', to: 'series-a', count: Math.floor(startups.filter(s => s.stage === 'series-a').length * 0.6) },
-    ].filter(s => s.count > 0);
-    
+
+    // Stage progression (velocity) requires per-startup stage history, which we
+    // do not yet record. Returning [] is the honest answer until that data
+    // exists — previously this was a fabricated multiple of current counts.
+    const stageVelocity: { from: string; to: string; count: number }[] = [];
+
     // Top sectors with avg stage
     const sectorData = Object.entries(sectorCounts)
       .map(([name, count]) => ({ name, count }))

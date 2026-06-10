@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDB } from '@/lib/db';
 import { Startup } from '@/models/start-up';
+import { profileStrengthScore } from '@/lib/signal-score';
 
 export async function GET(req: NextRequest) {
   try {
@@ -62,18 +63,9 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// Single source of truth for profile completeness lives in lib/signal-score.ts.
 function calculateProfileScore(startup: any): number {
-  let score = 0;
-  if (startup.logo && !startup.logo.includes('placeholder')) score += 15;
-  if (startup.description?.length > 200) score += 15;
-  if (startup.founders?.length > 0) score += 15;
-  if (startup.website) score += 10;
-  if (startup.pitch) score += 10;
-  if (startup.achievements?.length > 0) score += 10;
-  if (startup.images?.length > 0) score += 10;
-  if (startup.video) score += 10;
-  if (startup.revenue) score += 5;
-  return Math.min(score, 100);
+  return profileStrengthScore(startup);
 }
 
 function isNewThisWeek(date: any): boolean {

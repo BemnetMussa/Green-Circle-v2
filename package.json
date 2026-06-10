@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build --no-lint",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:demo": "node --env-file=.env.local scripts/seed-demo-accounts.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",

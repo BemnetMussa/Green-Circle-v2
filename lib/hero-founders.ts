@@ -15,32 +15,31 @@ const IMG_COPY = '/images/image%20copy.png';
 
 export const HERO_FOUNDER_SLIDES: HeroFounderSlide[] = [
   {
-    id: 'hero-1',
-    src: '/images/image%20copy%204.png',
-    alt: 'Samrawit Fikru, Ethiopian founder with product.',
-    caption: 'Samrawit Fikru — building products that matter.',
-    credit: 'Samrawit Fikru',
+    id: "hero-1",
+    src: "/images/image%20copy%204.png",
+    alt: "Samrawit Fikru, founder of RIDE, Ethiopia's ride-hailing platform.",
+    caption: "Samrawit Fikru — Founder of RIDE, transforming urban mobility in Ethiopia.",
+    credit: "Samrawit Fikru",
   },
   {
-    id: 'hero-2',
+    id: "hero-2",
     src: IMG_COPY,
-    alt: 'Bethelhem Tadesse, Ethiopian founder with product.',
-    caption: 'Bethelhem Tadesse — innovation at work.',
-    credit: 'Bethelhem Tadesse',
+    alt: "Betelhem Dessie, founder of iCog Anyone Can Code, an AI and coding education platform.",
+    caption: "Betelhem Dessie — Founder of iCog Anyone Can Code, bringing AI and coding education to African youth.",
+    credit: "Betelhem Dessie",
   },
-   {
-    id: 'hero-3',
+  {
+    id: "hero-3",
     src: "/images/image%20copy%202.png",
-    alt: 'Dawit Abraham Co-Founder and CEO of Beemi,',
-    caption: 'Dawit Abraham Co-Founder and CEO of Beemi - Ethiopian-based startup that gamifies live streaming platforms',
-    credit: 'Dawit Abraham',
+    alt: "Dawit Abraham, Co-Founder and CEO of Beemi, an interactive live-streaming platform.",
+    caption: "Dawit Abraham — Co-Founder of Beemi, reimagining interactive live streaming and gaming.",
+    credit: "Dawit Abraham",
   },
-   {
-    id: 'hero-4',
+  {
+    id: "hero-4",
     src: "/images/image%20copy%203.png",
-    alt: 'Ezedin Kamil co-founder and CEO of Ibex Technologies and Tina Mart.,',
-    caption: 'Ezedin Kamil co-founder and CEO of Ibex Technologies and Tina Mart.,',
-    credit: 'Ezedin Kamil',
+    alt: "Ezedin Kamil, Co-Founder and CEO of Tina Mart and Ibex Technologies.",
+    caption: "Ezedin Kamil — Co-Founder of Tina Mart, helping Ethiopian businesses thrive online.",
+    credit: "Ezedin Kamil",
   },
-
 ];
