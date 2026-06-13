@@ -18,6 +18,14 @@ export interface DealroomMockMetrics {
   lastRound: string; // "$2.0m SEED"
   lastRoundDate: string; // "May 2022"
   jobOpenings: number | null;
+  // Raw numbers backing the formatted strings — let the ecosystem dashboard
+  // aggregate the SAME figures the table displays, so they stay consistent.
+  fundingUsd: number;
+  lastRoundUsd: number;
+  lastRoundType: string;
+  lastRoundYear: number;
+  valuationLowUsd: number | null;
+  valuationHighUsd: number | null;
 }
 
 const MONTHS = [
@@ -76,7 +84,7 @@ function mulberry32(a: number): () => number {
 
 /* money formatting (Dealroom-style) ----------------------------------------- */
 
-function fmtAmount(n: number): string {
+export function fmtAmount(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}b`;
   if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}m`;
   if (n >= 1e3) {
@@ -126,9 +134,13 @@ export function dealroomMock(c: PublicCompany): DealroomMockMetrics {
 
   // Valuation — only when funding is meaningful (else "—", like Dealroom)
   let valuation: string | null = null;
+  let valuationLowUsd: number | null = null;
+  let valuationHighUsd: number | null = null;
   if (funding >= 300_000) {
     const low = funding * (4 + rnd() * 3);
     const high = low * (1.25 + rnd() * 0.5);
+    valuationLowUsd = Math.round(low);
+    valuationHighUsd = Math.round(high);
     valuation = fmtRange(low, high);
   }
 
@@ -170,5 +182,11 @@ export function dealroomMock(c: PublicCompany): DealroomMockMetrics {
     lastRound,
     lastRoundDate,
     jobOpenings,
+    fundingUsd: funding,
+    lastRoundUsd: funding > 0 ? roundAmt : 0,
+    lastRoundType: roundType,
+    lastRoundYear: year,
+    valuationLowUsd,
+    valuationHighUsd,
   };
 }

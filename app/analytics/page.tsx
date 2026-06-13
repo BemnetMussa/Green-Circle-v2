@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { ArrowRight, LayoutList, BarChart3 } from 'lucide-react';
 import { CompanyTable } from '@/components/analytics/company-table';
+import { EcosystemDashboard } from '@/components/analytics/ecosystem-dashboard';
 
 interface AnalyticsData {
   overview: {
@@ -198,20 +199,13 @@ function StatsView({
 
   return (
     <>
-      {/* Overview Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        <StatCard label="Total Startups" value={data.overview.totalStartups} sublabel="In directory" />
-        <StatCard label="Sectors Covered" value={data.overview.totalSectors} sublabel="Industries" />
-        <StatCard label="Avg Team Size" value={data.overview.avgTeamSize} sublabel="Founders + employees" />
-        <StatCard
-          label="Seeking Investment"
-          value={data.overview.seekingInvestment}
-          sublabel="Active deals"
-          highlight
-        />
-      </div>
+      {/* Dealroom-style ecosystem dashboard (KPIs, funding, map, VCs, rounds) */}
+      <EcosystemDashboard />
 
-      {/* Charts Grid */}
+      {/* Detailed real charts */}
+      <h3 className="mt-14 mb-6 text-sm font-semibold uppercase tracking-[0.12em] text-ink-faint">
+        Detailed breakdown · real data
+      </h3>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ChartCard title="Startups by Sector">
           <ResponsiveContainer width="100%" height={300}>
@@ -335,26 +329,6 @@ function StatsView({
         </ChartCard>
       </div>
     </>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  sublabel,
-  highlight = false,
-}: {
-  label: string;
-  value: number;
-  sublabel: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className={`p-5 rounded-xl border ${highlight ? 'bg-forest/5 border-forest/20' : 'bg-paper border-rule'}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint mb-1">{label}</p>
-      <p className={`text-3xl font-bold ${highlight ? 'text-forest' : 'text-ink'}`}>{value}</p>
-      <p className="text-xs text-ink-muted mt-1">{sublabel}</p>
-    </div>
   );
 }
 

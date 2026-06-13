@@ -321,20 +321,38 @@ function Dash() {
 function NameCell({ company }: { company: PublicCompany }) {
   return (
     <div className="flex items-center gap-3 min-w-0">
-      {company.logo && !company.logo.includes('placeholder') ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={company.logo} alt="" className="h-9 w-9 shrink-0 rounded-md object-cover border border-rule" />
-      ) : (
-        <div className="h-9 w-9 shrink-0 rounded-md bg-paper-tint border border-rule flex items-center justify-center text-xs font-semibold text-ink-muted">
-          {company.name.charAt(0).toUpperCase()}
-        </div>
-      )}
+      <LogoAvatar src={company.logo} name={company.name} />
       <div className="min-w-0">
         <p className="text-sm font-semibold text-ink truncate max-w-[220px]">{company.name}</p>
         {company.description && (
           <p className="text-xs text-ink-muted truncate max-w-[220px]">{company.description}</p>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Real company logo, falling back to an initial-letter placeholder when the
+ *  URL is missing, a placeholder, or fails to load. */
+function LogoAvatar({ src, name }: { src?: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  const showImg = Boolean(src) && !src!.includes('placeholder') && !failed;
+
+  if (showImg) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={`${name} logo`}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className="h-9 w-9 shrink-0 rounded-md object-contain bg-paper border border-rule p-0.5"
+      />
+    );
+  }
+  return (
+    <div className="h-9 w-9 shrink-0 rounded-md bg-paper-tint border border-rule flex items-center justify-center text-xs font-semibold text-ink-muted">
+      {name.charAt(0).toUpperCase()}
     </div>
   );
 }
