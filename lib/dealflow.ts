@@ -16,6 +16,8 @@ export interface DealflowFilters {
   stage?: string;
   location?: string;
   minScore?: number;
+  /** Case-insensitive match on name / description. */
+  search?: string;
   sort?: 'score' | 'trending' | 'newest';
   limit?: number;
 }
@@ -41,6 +43,13 @@ const EMPTY_ENGAGEMENT: StartupEngagement = {
   watchlistAdds: 0,
   viewTrend: null,
 };
+
+/** Coerce a Date or ISO/string value to an ISO string; tolerant of lean() data. */
+function toIso(value: Date | string | undefined): string | undefined {
+  if (!value) return undefined;
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
 
 export async function buildDealflow(filters: DealflowFilters): Promise<DealflowItem[]> {
   await connectToDB();
@@ -82,7 +91,7 @@ export async function buildDealflow(filters: DealflowFilters): Promise<DealflowI
       description: (doc as { description?: string }).description,
       foundedYear: (doc as { foundedYear?: string }).foundedYear,
       employees: (doc as { employees?: string }).employees,
-      createdAt: (doc as { createdAt?: Date }).createdAt?.toISOString(),
+      createdAt: toIso((doc as { createdAt?: Date | string }).createdAt),
       signal,
       engagement,
     };
@@ -90,6 +99,15 @@ export async function buildDealflow(filters: DealflowFilters): Promise<DealflowI
 
   if (typeof filters.minScore === 'number' && filters.minScore > 0) {
     items = items.filter((i) => i.signal.overall >= filters.minScore!);
+  }
+
+  if (filters.search?.trim()) {
+    const q = filters.search.trim().toLowerCase();
+    items = items.filter(
+      (i) =>
+        i.name.toLowerCase().includes(q) ||
+        (i.description ?? '').toLowerCase().includes(q)
+    );
   }
 
   const sort = filters.sort ?? 'score';
