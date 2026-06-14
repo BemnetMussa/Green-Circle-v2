@@ -203,9 +203,12 @@ function StatsView({
       <EcosystemDashboard />
 
       {/* Detailed real charts */}
-      <h3 className="mt-14 mb-6 text-sm font-semibold uppercase tracking-[0.12em] text-ink-faint">
-        Detailed breakdown · real data
-      </h3>
+      <div className="mt-16 mb-6 flex items-center gap-4">
+        <h3 className="font-sans text-xs font-bold uppercase tracking-[0.12em] text-ink-muted whitespace-nowrap">
+          Detailed breakdown · real data
+        </h3>
+        <div className="h-px flex-1 bg-rule" />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ChartCard title="Startups by Sector">
           <ResponsiveContainer width="100%" height={300}>
@@ -334,8 +337,8 @@ function StatsView({
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-paper rounded-xl border border-rule p-6">
-      <h3 className="text-sm font-semibold text-ink mb-6">{title}</h3>
+    <div className="bg-paper rounded-xl border border-rule p-6 shadow-sm">
+      <h3 className="text-base font-semibold text-ink mb-6">{title}</h3>
       {children}
     </div>
   );

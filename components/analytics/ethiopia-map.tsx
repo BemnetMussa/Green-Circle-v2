@@ -25,6 +25,7 @@ export function EthiopiaMap({
   height?: number;
 }) {
   const [geo, setGeo] = useState<FeatureCollection | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
 
   useEffect(() => {
     let on = true;
@@ -67,32 +68,46 @@ export function EthiopiaMap({
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto" role="img" aria-label="Map of Ethiopia">
-      <path d={pathD} fill="#EAF1ED" stroke="#1F4F3F" strokeWidth={0.8} strokeLinejoin="round" />
+      <defs>
+        <radialGradient id="eth-bubble" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#3A7A5F" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#1F4F3F" stopOpacity="0.12" />
+        </radialGradient>
+        <filter id="eth-shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#1F4F3F" floodOpacity="0.35" />
+        </filter>
+      </defs>
+      <path d={pathD} fill="#EAF1ED" stroke="#1F4F3F" strokeWidth={0.9} strokeLinejoin="round" />
       {project &&
         bubbles.map((b, i) => {
           const p = project(b.lng, b.lat);
           if (!p) return null;
-          const r = 7 + (b.count / maxCount) * 24;
+          const base = 7 + (b.count / maxCount) * 24;
+          const hovered = hover === i;
+          const r = hovered ? base * 1.12 : base;
           return (
-            <g key={`${b.city}-${i}`}>
-              <circle cx={p[0]} cy={p[1]} r={r} fill="#1F4F3F" fillOpacity={0.16} />
-              <circle cx={p[0]} cy={p[1]} r={Math.max(3, r * 0.38)} fill="#1F4F3F" />
-              <text
-                x={p[0]}
-                y={p[1] - r - 5}
-                textAnchor="middle"
-                className="fill-ink"
-                style={{ fontSize: 11, fontWeight: 600 }}
-              >
+            <g
+              key={`${b.city}-${i}`}
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+            >
+              <title>{`${b.city}: ${b.count} ${b.count === 1 ? 'company' : 'companies'}`}</title>
+              <circle
+                cx={p[0]}
+                cy={p[1]}
+                r={r}
+                fill="url(#eth-bubble)"
+                stroke="#1F4F3F"
+                strokeOpacity={hovered ? 0.65 : 0.3}
+                strokeWidth={hovered ? 1.2 : 0.8}
+                className="transition-all duration-150"
+              />
+              <circle cx={p[0]} cy={p[1]} r={Math.max(3, base * 0.38)} fill="#1F4F3F" filter="url(#eth-shadow)" />
+              <text x={p[0]} y={p[1] - r - 5} textAnchor="middle" className="fill-ink" style={{ fontSize: 11, fontWeight: 600 }}>
                 {b.city}
               </text>
-              <text
-                x={p[0]}
-                y={p[1] - r + 8}
-                textAnchor="middle"
-                className="fill-paper"
-                style={{ fontSize: 10, fontWeight: 700 }}
-              >
+              <text x={p[0]} y={p[1] - r + 8} textAnchor="middle" className="fill-paper" style={{ fontSize: 10, fontWeight: 700 }}>
                 {b.count}
               </text>
             </g>

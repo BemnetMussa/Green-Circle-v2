@@ -7,7 +7,8 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { authClient } from '@/lib/auth-client';
 import { STARTUP_STAGES, STARTUP_STAGE_LABELS } from '@/lib/startup-stage';
-import { DealCard, type DealCardData } from '@/components/investor/deal-card';
+import { DealflowTable } from '@/components/investor/dealflow-table';
+import type { DealCardData } from '@/components/investor/deal-card';
 import {
   BarChart,
   Bar,
@@ -25,14 +26,15 @@ import {
   TrendingUp,
   Eye,
   Building2,
-  Sparkles,
-  Flame,
   Gauge,
   ArrowRight,
   BookmarkCheck,
+  LayoutList,
+  BarChart3,
 } from 'lucide-react';
 
 const COLORS = ['#1F4F3F', '#C5A028', '#2D5A4A', '#D4B84A', '#3A7A5F', '#E8D070'];
+const SHELL = 'mx-auto w-full max-w-[90rem] px-5 sm:px-8 lg:px-10';
 
 interface AnalyticsData {
   dealFlow: {
@@ -61,7 +63,7 @@ interface AnalyticsData {
 }
 
 type SortKey = 'score' | 'trending' | 'newest';
-
+const SORT_LABELS: Record<SortKey, string> = { score: 'Signal Score', trending: 'Trending', newest: 'Newest' };
 const STAGE_OPTIONS = STARTUP_STAGES.filter((s) => s !== 'undisclosed');
 
 export default function InvestorAnalyticsPage() {
@@ -72,7 +74,6 @@ export default function InvestorAnalyticsPage() {
 
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [deals, setDeals] = useState<DealCardData[]>([]);
-  const [trending, setTrending] = useState<DealCardData[]>([]);
   const [dealsLoading, setDealsLoading] = useState(true);
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
 
@@ -109,11 +110,6 @@ export default function InvestorAnalyticsPage() {
           setLoading(false);
         });
 
-      // Trending rail (separate sort) + watchlist
-      fetch('/api/investor/dealflow?sort=trending&limit=6')
-        .then((r) => r.json())
-        .then((d) => setTrending(d.items ?? []))
-        .catch(() => {});
       fetch('/api/investor/watchlist')
         .then((r) => r.json())
         .then((d) => {
@@ -154,6 +150,13 @@ export default function InvestorAnalyticsPage() {
       });
       if (res.ok) setWatchlist((prev) => new Set([...prev, startupId]));
     } catch {}
+  };
+
+  const resetFilters = () => {
+    setSector('all');
+    setStage('all');
+    setMinScore(0);
+    setSort('score');
   };
 
   // ---- gates ----
@@ -206,6 +209,7 @@ export default function InvestorAnalyticsPage() {
   }
 
   const hasEngagement = data.engagement.totalViews > 0;
+  const hasFilter = sector !== 'all' || stage !== 'all' || minScore > 0 || sort !== 'score';
   const exportHref = `/api/investor/dealflow/export?${queryString()}`;
 
   return (
@@ -214,27 +218,19 @@ export default function InvestorAnalyticsPage() {
 
       {/* Hero */}
       <div className="bg-forest text-paper">
-        <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
-          <span className="rounded bg-paper/20 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider">
+        <div className={`${SHELL} py-12`}>
+          <span className="rounded bg-paper/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wider">
             Investor Intelligence
           </span>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            Deal Flow &amp; Signal Intelligence
-          </h1>
-          <p className="mt-3 max-w-2xl text-paper/80">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Deal Flow &amp; Signal Intelligence</h1>
+          <p className="mt-3 max-w-2xl text-paper/85">
             {data.dealFlow.totalTracked} startups scored on investment signal ·{' '}
             {data.dealFlow.seekingInvestment} actively seeking investment.
           </p>
-          <a
-            href={exportHref}
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-paper px-4 py-2 text-sm font-medium text-forest transition-colors hover:bg-paper/90"
-          >
-            <Download className="h-4 w-4" /> Export deal flow (CSV)
-          </a>
         </div>
       </div>
 
-      <main className="mx-auto max-w-6xl px-5 py-12 pb-24 sm:px-8">
+      <main className={`${SHELL} py-10 pb-24`}>
         {/* KPI band */}
         <div className="mb-12 grid grid-cols-2 gap-4 md:grid-cols-5">
           <Kpi icon={<Gauge className="h-4 w-4" />} label="Avg Signal Score" value={data.dealFlow.avgSignalScore} sub="Across tracked startups" />
@@ -244,70 +240,66 @@ export default function InvestorAnalyticsPage() {
           <Kpi icon={<Eye className="h-4 w-4" />} label="Profile Views" value={hasEngagement ? data.engagement.uniqueViews : '—'} sub={hasEngagement ? 'Unique, last 30d' : 'Accruing'} />
         </div>
 
-        {/* Trending now */}
-        <Section title="Trending Now" icon={<Flame className="h-5 w-5" />}>
-          {!hasEngagement && (
-            <p className="-mt-3 mb-4 text-xs text-ink-muted">
-              Ranked by investment potential until viewing activity builds up.
-            </p>
-          )}
-          {trending.length === 0 ? (
-            <Empty>No startups to rank yet.</Empty>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {trending.slice(0, 6).map((d) => (
-                <DealCard key={d._id} deal={d} watchlisted={watchlist.has(d._id)} onWatchlist={addToWatchlist} />
-              ))}
+        {/* Deal flow — primary surface */}
+        <Section title="Deal flow" icon={<LayoutList className="h-5 w-5" />} subtitle="Every tracked startup, ranked by investment signal. Filter to your thesis, then save or open a profile.">
+          {/* Filter toolbar */}
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <FilterSelect label="Sector" value={sector} onChange={setSector}
+                options={[{ v: 'all', l: 'All sectors' }, ...data.marketIntelligence.sectorMomentum.map((s) => ({ v: s.name, l: s.name }))]} />
+              <FilterSelect label="Stage" value={stage} onChange={setStage}
+                options={[{ v: 'all', l: 'All stages' }, ...STAGE_OPTIONS.map((s) => ({ v: s, l: STARTUP_STAGE_LABELS[s] }))]} />
+              <FilterSelect label="Sort" value={sort} onChange={(v) => setSort(v as SortKey)}
+                options={(['score', 'trending', 'newest'] as SortKey[]).map((s) => ({ v: s, l: SORT_LABELS[s] }))} />
+              <label className="inline-flex items-center gap-2 rounded-md border border-rule bg-paper-tint px-3 h-9 text-xs text-ink-muted">
+                Min score <span className="font-bold text-ink tabular-nums">{minScore}</span>
+                <input type="range" min={0} max={100} step={5} value={minScore}
+                  onChange={(e) => setMinScore(parseInt(e.target.value, 10))} className="accent-forest" />
+              </label>
+              {hasFilter && (
+                <button onClick={resetFilters} className="h-9 px-2.5 text-sm text-ink-muted hover:text-ink">Clear</button>
+              )}
             </div>
-          )}
-        </Section>
+            <a href={exportHref}
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-rule bg-paper-tint px-3 text-sm font-medium text-ink-muted hover:text-ink hover:border-ink/30">
+              <Download className="h-4 w-4" /> Export CSV
+            </a>
+          </div>
 
-        {/* Top opportunities + thesis filters */}
-        <Section title="Top Opportunities" icon={<Sparkles className="h-5 w-5" />}>
-          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-rule bg-paper-deep p-3">
-            <FilterSelect label="Sector" value={sector} onChange={setSector}
-              options={[{ v: 'all', l: 'All sectors' }, ...data.marketIntelligence.sectorMomentum.map((s) => ({ v: s.name, l: s.name }))]} />
-            <FilterSelect label="Stage" value={stage} onChange={setStage}
-              options={[{ v: 'all', l: 'All stages' }, ...STAGE_OPTIONS.map((s) => ({ v: s, l: STARTUP_STAGE_LABELS[s] }))]} />
-            <FilterSelect label="Sort" value={sort} onChange={(v) => setSort(v as SortKey)}
-              options={[{ v: 'score', l: 'Signal Score' }, { v: 'trending', l: 'Trending' }, { v: 'newest', l: 'Newest' }]} />
-            <label className="flex items-center gap-2 text-xs text-ink-muted">
-              Min score: <span className="font-semibold text-ink">{minScore}</span>
-              <input type="range" min={0} max={100} step={5} value={minScore}
-                onChange={(e) => setMinScore(parseInt(e.target.value, 10))} className="accent-forest" />
-            </label>
+          {/* Count + quick links */}
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm text-ink-muted">
+              Showing <span className="font-semibold text-ink">{deals.length}</span>{' '}
+              {deals.length === 1 ? 'opportunity' : 'opportunities'} · sorted by {SORT_LABELS[sort]}
+            </span>
+            <div className="flex items-center gap-5 text-sm">
+              <Link href="/investor/watchlist" className="inline-flex items-center gap-1.5 font-medium text-ink-muted hover:text-forest">
+                <BookmarkCheck className="h-4 w-4" /> Watchlist ({watchlist.size})
+              </Link>
+              <Link href="/startups" className="inline-flex items-center gap-1.5 font-medium text-forest hover:underline">
+                Full directory <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
           {dealsLoading ? (
             <Empty>Loading opportunities…</Empty>
           ) : deals.length === 0 ? (
-            <Empty>No startups match these filters.</Empty>
+            <Empty>No startups match these filters. Try widening your thesis or lowering the minimum score.</Empty>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {deals.map((d) => (
-                <DealCard key={d._id} deal={d} watchlisted={watchlist.has(d._id)} onWatchlist={addToWatchlist} />
-              ))}
-            </div>
+            <DealflowTable deals={deals} watchlist={watchlist} onWatchlist={addToWatchlist} />
           )}
-          <div className="mt-6 flex items-center justify-center gap-6 text-sm">
-            <Link href="/startups" className="inline-flex items-center gap-2 font-medium text-forest hover:underline">
-              Browse full directory <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="/investor/watchlist" className="inline-flex items-center gap-2 font-medium text-ink-muted hover:text-forest">
-              <BookmarkCheck className="h-4 w-4" /> Your watchlist ({watchlist.size})
-            </Link>
-          </div>
         </Section>
 
-        {/* Market intelligence */}
-        <Section title="Market Intelligence" icon={<Building2 className="h-5 w-5" />}>
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        {/* Market signals — focused charts */}
+        <Section title="Market signals" icon={<BarChart3 className="h-5 w-5" />} subtitle="Where quality, stage and momentum sit across the tracked ecosystem. Real data.">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <ChartCard title="Signal Score Distribution">
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={data.marketIntelligence.signalScoreDistribution}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
-                  <XAxis dataKey="range" tick={{ fontSize: 11 }} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} allowDecimals={false} />
+                  <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                     {data.marketIntelligence.signalScoreDistribution.map((_, i) => (
@@ -319,11 +311,11 @@ export default function InvestorAnalyticsPage() {
             </ChartCard>
 
             <ChartCard title="Stage Funnel">
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={data.marketIntelligence.stageFunnel} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E5E5" />
                   <XAxis type="number" hide allowDecimals={false} />
-                  <YAxis dataKey="label" type="category" width={90} tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="label" type="category" width={92} tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} />
                   <Bar dataKey="count" fill="#1F4F3F" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -332,13 +324,13 @@ export default function InvestorAnalyticsPage() {
 
             <ChartCard title="Sector Momentum (30-day growth)">
               {data.marketIntelligence.sectorMomentum.length === 0 ? (
-                <Empty>No sectors yet.</Empty>
+                <Empty>No sector data yet.</Empty>
               ) : (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={data.marketIntelligence.sectorMomentum} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E5E5" />
                     <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="name" type="category" width={92} tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle}
                       formatter={(v, _n, p) => [`${v ?? 0}% growth`, `${p.payload.startupCount} startups`]} />
                     <Bar dataKey="growthRate" fill="#C5A028" radius={[0, 4, 4, 0]} />
@@ -347,61 +339,37 @@ export default function InvestorAnalyticsPage() {
               )}
             </ChartCard>
 
-            <ChartCard title="Startup Growth (12 months)">
-              <ResponsiveContainer width="100%" height={260}>
+            <ChartCard title="Startups Added (12 months)">
+              <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={data.marketIntelligence.monthlyGrowth}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
-                  <XAxis dataKey="month" tick={{ fontSize: 10 }} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} allowDecimals={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#5e584e' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} joined`, 'New']} />
-                  <Line type="monotone" dataKey="count" stroke="#1F4F3F" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="count" stroke="#1F4F3F" strokeWidth={2} dot={{ r: 3, fill: '#1F4F3F' }} activeDot={{ r: 5, fill: '#C5A028' }} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
-
-          {/* Geographic */}
-          <div className="mt-8">
-            <ChartCard title="Geographic Distribution">
-              {data.marketIntelligence.geographic.length === 0 ? (
-                <Empty>No locations yet.</Empty>
-              ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={data.marketIntelligence.geographic}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} interval={0} angle={-20} textAnchor="end" height={60} />
-                    <YAxis tick={{ fontSize: 11 }} axisLine={false} allowDecimals={false} />
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} />
-                    <Bar dataKey="count" fill="#2D5A4A" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </ChartCard>
-          </div>
         </Section>
 
-        {/* Engagement — real, with honest empty states */}
-        <Section title="Investor Engagement" icon={<Eye className="h-5 w-5" />}>
-          {!hasEngagement ? (
-            <Empty>
-              Engagement insights — top searches, most-viewed startups, dwell time — unlock
-              automatically as investors browse the platform. No activity recorded yet.
-            </Empty>
-          ) : (
+        {/* Engagement — only when there's real activity */}
+        {hasEngagement && (
+          <Section title="Investor engagement" icon={<Eye className="h-5 w-5" />} subtitle="How investors are interacting with the platform, last 7–30 days.">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="rounded-xl border border-rule bg-paper p-6 lg:col-span-2">
-                <h3 className="mb-4 text-sm font-semibold text-ink">Most Viewed (7 days)</h3>
-                <div className="space-y-3">
+              <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm lg:col-span-2">
+                <h3 className="mb-4 text-base font-semibold text-ink">Most Viewed (7 days)</h3>
+                <div className="space-y-2.5">
                   {data.marketIntelligence.mostViewed.length === 0 ? (
                     <Empty>No views yet this week.</Empty>
                   ) : (
                     data.marketIntelligence.mostViewed.map((s, i) => (
-                      <div key={i} className="flex items-center justify-between rounded-lg border border-rule/50 bg-paper-deep p-3">
+                      <div key={i} className="flex items-center justify-between rounded-lg border border-rule bg-paper-tint p-3">
                         <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm text-ink-faint">#{i + 1}</span>
+                          <span className="font-mono text-sm font-semibold text-ink-muted">#{i + 1}</span>
                           <div>
                             <p className="font-medium text-ink">{s.name}</p>
-                            <p className="text-xs text-ink-muted">{s.sector}</p>
+                            <p className="text-xs text-ink-muted capitalize">{s.sector}</p>
                           </div>
                         </div>
                         <span className="inline-flex items-center gap-1 text-sm text-ink-muted">
@@ -412,8 +380,8 @@ export default function InvestorAnalyticsPage() {
                   )}
                 </div>
               </div>
-              <div className="rounded-xl border border-rule bg-paper p-6">
-                <h3 className="mb-4 text-sm font-semibold text-ink">Top Searches</h3>
+              <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm">
+                <h3 className="mb-4 text-base font-semibold text-ink">Top Searches</h3>
                 {data.engagement.topSearchTerms.length === 0 ? (
                   <Empty>No searches yet.</Empty>
                 ) : (
@@ -426,12 +394,12 @@ export default function InvestorAnalyticsPage() {
                     ))}
                   </div>
                 )}
-                <h3 className="mb-3 mt-6 text-sm font-semibold text-ink">Avg Time on Profile</h3>
-                <p className="text-2xl font-bold text-ink">{data.engagement.avgTimeOnPage}s</p>
+                <h3 className="mb-2 mt-6 text-base font-semibold text-ink">Avg Time on Profile</h3>
+                <p className="text-2xl font-bold text-ink tabular-nums">{data.engagement.avgTimeOnPage}s</p>
               </div>
             </div>
-          )}
-        </Section>
+          </Section>
+        )}
       </main>
 
       <Footer />
@@ -485,12 +453,25 @@ function Gate({
   );
 }
 
-function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  subtitle,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="mb-16">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="rounded-lg bg-forest/10 p-2 text-forest">{icon}</div>
-        <h2 className="text-xl font-semibold text-ink">{title}</h2>
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-forest/10 p-2 text-forest">{icon}</div>
+          <h2 className="text-xl font-semibold text-ink">{title}</h2>
+        </div>
+        {subtitle && <p className="mt-2 max-w-2xl text-sm text-ink-muted">{subtitle}</p>}
       </div>
       {children}
     </section>
@@ -499,12 +480,12 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 
 function Kpi({ icon, label, value, sub }: { icon?: React.ReactNode; label: string; value: string | number; sub: string }) {
   return (
-    <div className="rounded-xl border border-rule bg-paper p-5">
-      <div className="mb-1 flex items-center gap-1.5 text-ink-faint">
-        {icon}
-        <p className="text-[11px] font-semibold uppercase tracking-wider">{label}</p>
+    <div className="rounded-xl border border-rule bg-paper p-5 shadow-sm">
+      <div className="mb-1 flex items-center gap-1.5">
+        <span className="text-forest">{icon}</span>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">{label}</p>
       </div>
-      <p className="text-2xl font-bold text-ink">{value}</p>
+      <p className="text-2xl font-bold text-ink tabular-nums">{value}</p>
       <p className="mt-1 text-xs text-ink-muted">{sub}</p>
     </div>
   );
@@ -512,8 +493,8 @@ function Kpi({ icon, label, value, sub }: { icon?: React.ReactNode; label: strin
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-rule bg-paper p-6">
-      <h3 className="mb-4 text-sm font-semibold text-ink">{title}</h3>
+    <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm">
+      <h3 className="mb-5 text-base font-semibold text-ink">{title}</h3>
       {children}
     </div>
   );
@@ -521,7 +502,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-rule bg-paper-deep/40 px-6 py-8 text-center text-sm text-ink-muted">
+    <div className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-rule bg-paper-tint px-6 py-8 text-center text-sm text-ink-muted">
       {children}
     </div>
   );
@@ -539,12 +520,12 @@ function FilterSelect({
   options: { v: string; l: string }[];
 }) {
   return (
-    <label className="flex items-center gap-2 text-xs text-ink-muted">
-      {label}:
+    <label className="inline-flex items-center gap-2 rounded-md border border-rule bg-paper-tint pl-3 pr-1 h-9 text-xs font-medium text-ink-muted">
+      {label}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-rule bg-paper px-2 py-1.5 text-xs font-medium text-ink focus:border-forest focus:outline-none"
+        className="h-full rounded-md bg-transparent pr-1 text-xs font-semibold text-ink focus:outline-none"
       >
         {options.map((o) => (
           <option key={o.v} value={o.v}>

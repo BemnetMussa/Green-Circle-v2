@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X, AlertCircle, ChevronDown, Download } from 'lucide-react';
+import Link from 'next/link';
+import { Search, X, AlertCircle, ChevronDown, Download, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
 import { LineChart, Line } from 'recharts';
 import {
   Table,
@@ -23,10 +24,48 @@ import type {
   CompaniesFacets,
 } from '@/app/api/analytics/companies/route';
 
-type SortKey = 'signal' | 'newest' | 'growth';
+type SortKey =
+  | 'name'
+  | 'signal'
+  | 'growth'
+  | 'launch'
+  | 'valuation'
+  | 'funding'
+  | 'location'
+  | 'lastRound'
+  | 'lastRoundDate'
+  | 'jobs';
+type SortDir = 'asc' | 'desc';
 type Row = { c: PublicCompany; m: DealroomMockMetrics };
 
 const PAGE = 30;
+// Columns whose natural first sort is ascending (alpha / chronological).
+const ASC_FIRST: SortKey[] = ['name', 'location', 'launch', 'lastRoundDate'];
+
+function sortValue(r: Row, key: SortKey): number | string {
+  switch (key) {
+    case 'name':
+      return r.c.name.toLowerCase();
+    case 'location':
+      return (firstLocationToken(r.c.location) || '').toLowerCase();
+    case 'signal':
+      return r.c.signal.overall;
+    case 'growth':
+      return r.m.growthPct;
+    case 'launch':
+      return Number(r.c.foundedYear) || 0;
+    case 'valuation':
+      return r.m.valuationLowUsd ?? -1;
+    case 'funding':
+      return r.m.fundingUsd;
+    case 'lastRound':
+      return r.m.lastRoundUsd;
+    case 'lastRoundDate':
+      return r.m.lastRoundYear;
+    case 'jobs':
+      return r.m.jobOpenings ?? -1;
+  }
+}
 
 export function CompanyTable() {
   const [companies, setCompanies] = useState<PublicCompany[] | null>(null);
@@ -39,7 +78,8 @@ export function CompanyTable() {
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedStages, setSelectedStages] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  const [sort, setSort] = useState<SortKey>('signal');
+  const [sortKey, setSortKey] = useState<SortKey>('signal');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [visibleCount, setVisibleCount] = useState(PAGE);
 
   useEffect(() => {
@@ -95,19 +135,21 @@ export function CompanyTable() {
     });
 
     const out: Row[] = filtered.map((c) => ({ c, m: metrics.get(c._id)! }));
-    if (sort === 'newest') {
-      out.sort((a, b) => (b.c.createdAt ?? '').localeCompare(a.c.createdAt ?? ''));
-    } else if (sort === 'growth') {
-      out.sort((a, b) => b.m.growthPct - a.m.growthPct);
-    } else {
-      out.sort((a, b) => b.c.signal.overall - a.c.signal.overall);
-    }
+    const dir = sortDir === 'asc' ? 1 : -1;
+    out.sort((a, b) => {
+      const av = sortValue(a, sortKey);
+      const bv = sortValue(b, sortKey);
+      if (typeof av === 'string' || typeof bv === 'string') {
+        return String(av).localeCompare(String(bv)) * dir;
+      }
+      return (av - bv) * dir;
+    });
     return out;
-  }, [companies, metrics, search, selectedSectors, selectedStages, selectedLocations, sort]);
+  }, [companies, metrics, search, selectedSectors, selectedStages, selectedLocations, sortKey, sortDir]);
 
   useEffect(() => {
     setVisibleCount(PAGE);
-  }, [search, selectedSectors, selectedStages, selectedLocations, sort]);
+  }, [search, selectedSectors, selectedStages, selectedLocations, sortKey, sortDir]);
 
   const hasActiveFilter =
     search.trim() !== '' ||
@@ -120,6 +162,15 @@ export function CompanyTable() {
     setSelectedSectors([]);
     setSelectedStages([]);
     setSelectedLocations([]);
+  }
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir(ASC_FIRST.includes(key) ? 'asc' : 'desc');
+    }
   }
 
   const visible = rows.slice(0, visibleCount);
@@ -160,31 +211,32 @@ export function CompanyTable() {
           </button>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
-          <div className="relative w-56">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" strokeWidth={1.5} />
-            <input
-              type="search"
-              placeholder="Search companies"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 bg-paper-tint border border-rule rounded-md text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest transition-colors"
-            />
-          </div>
-          <label className="inline-flex items-center gap-2 text-sm text-ink-muted whitespace-nowrap">
-            Sort
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-              className="h-9 rounded-md border border-rule bg-paper-tint px-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest"
-            >
-              <option value="signal">Signal score</option>
-              <option value="growth">Growth</option>
-              <option value="newest">Newest</option>
-            </select>
-          </label>
+        <div className="ml-auto relative w-56">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" strokeWidth={1.5} />
+          <input
+            type="search"
+            placeholder="Search companies"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-9 pl-9 pr-3 bg-paper-tint border border-rule rounded-md text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest transition-colors"
+          />
         </div>
       </div>
+
+      {/* Active filter pills */}
+      {selectedSectors.length + selectedStages.length + selectedLocations.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedSectors.map((s) => (
+            <Pill key={`sec-${s}`} label={s} onRemove={() => setSelectedSectors((p) => p.filter((x) => x !== s))} />
+          ))}
+          {selectedStages.map((s) => (
+            <Pill key={`st-${s}`} label={stageCheckboxLabel(s)} onRemove={() => setSelectedStages((p) => p.filter((x) => x !== s))} />
+          ))}
+          {selectedLocations.map((s) => (
+            <Pill key={`loc-${s}`} label={s} onRemove={() => setSelectedLocations((p) => p.filter((x) => x !== s))} />
+          ))}
+        </div>
+      )}
 
       {/* Count + export */}
       <div className="flex items-center justify-between">
@@ -224,27 +276,32 @@ export function CompanyTable() {
         <div className="py-20 text-center text-ink-muted">No companies match your filters.</div>
       ) : (
         <>
-          <div className="rounded-xl border border-rule overflow-x-auto">
-            <Table className="min-w-[1280px]">
+          <div className="rounded-xl border border-rule overflow-x-auto shadow-sm bg-paper">
+            <Table className="min-w-[1280px] [&_td]:py-3">
               <TableHeader>
-                <TableRow className="bg-paper-tint hover:bg-paper-tint border-rule">
-                  <Th className="pl-4">Name</Th>
-                  <Th>Signal</Th>
+                <TableRow className="bg-paper-deep hover:bg-paper-deep border-b-2 border-rule">
+                  <SortTh label="Name" col="name" sortKey={sortKey} dir={sortDir} onSort={toggleSort} className="pl-4" />
+                  <SortTh label="Signal" col="signal" sortKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <Th>Market</Th>
                   <Th>Type</Th>
-                  <Th>Growth</Th>
-                  <Th>Launch</Th>
-                  <Th>Valuation</Th>
-                  <Th>Funding</Th>
-                  <Th>Location</Th>
-                  <Th>Last round</Th>
-                  <Th>Last round date</Th>
-                  <Th className="pr-4">Jobs</Th>
+                  <SortTh label="Growth" col="growth" sortKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortTh label="Launch" col="launch" sortKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortTh label="Valuation" col="valuation" sortKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortTh label="Funding" col="funding" sortKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortTh label="Location" col="location" sortKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortTh label="Last round" col="lastRound" sortKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortTh label="Last round date" col="lastRoundDate" sortKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortTh label="Jobs" col="jobs" sortKey={sortKey} dir={sortDir} onSort={toggleSort} className="pr-4" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visible.map(({ c, m }) => (
-                  <TableRow key={c._id} className="border-rule hover:bg-paper-tint/60">
+                {visible.map(({ c, m }, i) => (
+                  <TableRow
+                    key={c._id}
+                    className={`border-rule transition-colors hover:bg-forest-faint ${
+                      i % 2 ? 'bg-paper-tint/50' : ''
+                    }`}
+                  >
                     <TableCell className="py-3 pl-4">
                       <NameCell company={c} />
                     </TableCell>
@@ -283,9 +340,10 @@ export function CompanyTable() {
             </Table>
           </div>
 
-          <p className="text-xs text-ink-faint">
-            Market figures (valuation, funding, rounds, growth, type) are sample data shown for layout
-            preview. Signal score, sector, launch year and location are real.
+          <p className="text-xs text-ink-muted">
+            <span className="font-semibold">Sample data:</span> valuation, funding, rounds, growth and
+            type are placeholders for layout preview. Signal score, sector, launch year and location are
+            real.
           </p>
 
           {visibleCount < rows.length && (
@@ -308,7 +366,7 @@ export function CompanyTable() {
 
 function Th({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <TableHead className={`h-11 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-faint ${className}`}>
+    <TableHead className={`h-11 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-muted ${className}`}>
       {children}
     </TableHead>
   );
@@ -323,12 +381,66 @@ function NameCell({ company }: { company: PublicCompany }) {
     <div className="flex items-center gap-3 min-w-0">
       <LogoAvatar src={company.logo} name={company.name} />
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-ink truncate max-w-[220px]">{company.name}</p>
+        <Link
+          href={`/startups/${company._id}`}
+          className="block max-w-[220px] truncate text-sm font-semibold text-ink hover:text-forest hover:underline"
+        >
+          {company.name}
+        </Link>
         {company.description && (
           <p className="text-xs text-ink-muted truncate max-w-[220px]">{company.description}</p>
         )}
       </div>
     </div>
+  );
+}
+
+/** Sortable column header — click to sort, click again to flip direction. */
+function SortTh({
+  label,
+  col,
+  sortKey,
+  dir,
+  onSort,
+  className = '',
+}: {
+  label: string;
+  col: SortKey;
+  sortKey: SortKey;
+  dir: SortDir;
+  onSort: (key: SortKey) => void;
+  className?: string;
+}) {
+  const active = sortKey === col;
+  return (
+    <TableHead className={`h-11 ${className}`}>
+      <button
+        type="button"
+        onClick={() => onSort(col)}
+        className={`inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors ${
+          active ? 'text-ink' : 'text-ink-muted hover:text-ink'
+        }`}
+      >
+        {label}
+        {active ? (
+          dir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ChevronsUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </button>
+    </TableHead>
+  );
+}
+
+/** Removable active-filter chip. */
+function Pill({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-forest/30 bg-forest/5 px-2.5 py-1 text-xs font-medium text-ink capitalize">
+      {label}
+      <button onClick={onRemove} aria-label={`Remove ${label}`} className="text-ink-muted hover:text-ink">
+        <X className="h-3 w-3" />
+      </button>
+    </span>
   );
 }
 
