@@ -14,6 +14,8 @@ import {
   mockEngagementSummary,
   mockSectorMomentum,
   mockMonthlyGrowth,
+  mockSignalDistribution,
+  mockStageFunnel,
 } from '@/lib/investor-engagement-mock';
 import {
   BarChart,
@@ -233,14 +235,28 @@ export default function InvestorAnalyticsPage() {
       }
     : { mostViewed: mockEng.mostViewed, topSearches: mockEng.topSearches, avgTime: mockEng.avgTimeSec };
 
-  // Charts with no real data yet fall back to sample so they don't read empty.
-  const realMomentum = data.marketIntelligence.sectorMomentum.filter((s) => s.growthRate != null);
-  const momentum = realMomentum.length > 0 ? { rows: realMomentum, sample: false } : { rows: mockSectorMomentum(), sample: true };
+  // Charts fall back to sample unless the REAL data is rich enough to read well
+  // (not just present-but-empty: e.g. all-zero growth, or a single stage).
+  const realMomentum = data.marketIntelligence.sectorMomentum.filter((s) => (s.growthRate ?? 0) > 0);
+  const momentum = realMomentum.length >= 3 ? { rows: realMomentum, sample: false } : { rows: mockSectorMomentum(), sample: true };
+
   const realGrowthTotal = data.marketIntelligence.monthlyGrowth.reduce((s, m) => s + m.count, 0);
   const growth =
     realGrowthTotal >= 8
       ? { rows: data.marketIntelligence.monthlyGrowth, sample: false }
       : { rows: mockMonthlyGrowth(), sample: true };
+
+  const sigNonZero = data.marketIntelligence.signalScoreDistribution.filter((b) => b.count > 0).length;
+  const signalDist =
+    sigNonZero >= 2
+      ? { rows: data.marketIntelligence.signalScoreDistribution, sample: false }
+      : { rows: mockSignalDistribution(), sample: true };
+
+  const funnelNonZero = data.marketIntelligence.stageFunnel.filter((s) => s.count > 0).length;
+  const stageFunnel =
+    funnelNonZero >= 3
+      ? { rows: data.marketIntelligence.stageFunnel, sample: false }
+      : { rows: mockStageFunnel(), sample: true };
 
   return (
     <div className="min-h-screen bg-paper-deep">
@@ -330,15 +346,15 @@ export default function InvestorAnalyticsPage() {
         {/* Market signals — focused charts */}
         <Section title="Market signals" icon={<BarChart3 className="h-5 w-5" />} subtitle="Quality, stage, sector momentum and growth across the tracked ecosystem. Charts tagged “Sample” use placeholder data until real volume builds.">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <ChartCard title="Signal Score Distribution">
+            <ChartCard title="Signal Score Distribution" tag={signalDist.sample ? 'Sample' : undefined}>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={data.marketIntelligence.signalScoreDistribution}>
+                <BarChart data={signalDist.rows}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d9d2c1" />
                   <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} cursor={{ fill: '#00000008' }} />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {data.marketIntelligence.signalScoreDistribution.map((_, i) => (
+                    {signalDist.rows.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Bar>
@@ -346,14 +362,14 @@ export default function InvestorAnalyticsPage() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Stage Funnel">
+            <ChartCard title="Stage Funnel" tag={stageFunnel.sample ? 'Sample' : undefined}>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={data.marketIntelligence.stageFunnel} layout="vertical">
+                <BarChart data={stageFunnel.rows} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#d9d2c1" />
-                  <XAxis type="number" hide allowDecimals={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <YAxis dataKey="label" type="category" width={92} tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} />
-                  <Bar dataKey="count" fill="#1F4F3F" radius={[0, 4, 4, 0]} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} cursor={{ fill: '#00000008' }} />
+                  <Bar dataKey="count" fill="#1F4F3F" radius={[0, 4, 4, 0]} barSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>

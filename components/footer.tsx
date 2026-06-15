@@ -7,7 +7,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-6 pt-20 pb-10">
         <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
-            <Logo />
+            <Logo showTagline />
             <p className="mt-6 max-w-xs text-sm leading-relaxed text-neutral-400 text-pretty">
               The central directory for Ethiopian innovation. Built so
               founders can be discovered, understood, and reached.

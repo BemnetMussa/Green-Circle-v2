@@ -65,6 +65,27 @@ export function mockSectorMomentum(): { name: string; growthRate: number; startu
   ];
 }
 
+export function mockSignalDistribution(): { range: string; count: number }[] {
+  return [
+    { range: '0–34', count: 4 },
+    { range: '35–49', count: 9 },
+    { range: '50–64', count: 14 },
+    { range: '65–79', count: 11 },
+    { range: '80–100', count: 6 },
+  ];
+}
+
+export function mockStageFunnel(): { stage: string; label: string; count: number }[] {
+  return [
+    { stage: 'idea', label: 'Idea / pre-product', count: 7 },
+    { stage: 'pre-seed', label: 'Pre-seed', count: 12 },
+    { stage: 'seed', label: 'Seed', count: 15 },
+    { stage: 'series-a', label: 'Series A', count: 8 },
+    { stage: 'series-b-plus', label: 'Series B+', count: 3 },
+    { stage: 'bootstrapped', label: 'Bootstrapped', count: 6 },
+  ];
+}
+
 export function mockMonthlyGrowth(): { month: string; count: number }[] {
   const now = new Date();
   const curve = [1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 8];

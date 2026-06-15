@@ -92,7 +92,7 @@ export default function StartupDetailPage({ id }: { id: string }) {
   const hasRevenue = Boolean(startup.revenue && String(startup.revenue).trim());
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col">
+    <div className="min-h-screen bg-paper-deep flex flex-col">
       <Header currentPage="startups" />
 
       <main className="flex-1 pb-24">

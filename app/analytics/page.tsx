@@ -60,17 +60,15 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {view === 'companies' ? (
-          <div className={`${SHELL} py-8 pb-24`}>
-            <CompanyTable />
-          </div>
-        ) : (
-          <div className="bg-paper-deep border-b border-rule">
-            <div className={`${SHELL} py-10 pb-20`}>
+        <div className="bg-paper-deep border-b border-rule">
+          <div className={`${SHELL} ${view === 'companies' ? 'py-8 pb-24' : 'py-10 pb-20'}`}>
+            {view === 'companies' ? (
+              <CompanyTable />
+            ) : (
               <StatsView data={data} loading={loading} error={error} />
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* CTA */}
         <div className={`${SHELL}`}>

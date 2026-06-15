@@ -5,87 +5,63 @@ type Variant = 'default' | 'white' | 'ink';
 interface LogoProps {
   variant?: Variant;
   markOnly?: boolean;
+  showTagline?: boolean;
   className?: string;
 }
+
+// Bright brand green from the logo artwork (rings + "GREEN"). "CIRCLE" + tagline
+// use the ink token so they flip to light on the dark footer.
+const GREEN = '#43b35f';
 
 export function Logo({
   variant = 'default',
   markOnly = false,
+  showTagline = false,
   className = '',
 }: LogoProps) {
-  const isWhite = variant === 'white';
-  const greenColor = isWhite ? 'text-paper' : 'text-ink';
-  const circleColor = variant === 'default' ? 'text-forest' : isWhite ? 'text-paper' : 'text-ink';
-  const scribbleColor = circleColor; 
+  const ink = variant === 'white' ? 'text-paper' : 'text-ink';
 
   if (markOnly) {
     return (
       <Link href="/" aria-label="Green Circle" className={`inline-flex items-center ${className}`}>
-        <Mark className={`h-8 w-8 ${scribbleColor}`} />
+        <Rings className="h-9 w-9" />
       </Link>
     );
   }
-
-  const size = 'text-[1.4375rem] sm:text-[1.5rem] leading-none tracking-[-0.035em]';
 
   return (
     <Link
       href="/"
       aria-label="Green Circle — home"
-      className={`inline-block py-2 group font-sans ${className}`}
+      className={`group inline-flex flex-col items-center ${className}`}
     >
-      <span className={`inline-flex items-baseline ${size}`}>
-        <span className={`font-medium ${greenColor}`}>Green</span>
-        
-        {/* Changed positioning on this span and the SVG inside it */}
-        <span className={`relative ml-[0.35em] font-semibold ${circleColor}`}>
-          Circle
-          <svg
-            aria-hidden
-            /* Centered directly over the text with controlled percentage sizing */
-            className={`pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[135%] h-[140%] -z-10 ${scribbleColor} opacity-55 transition-opacity duration-200 group-hover:opacity-[0.88]`}
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M 9 52 Q 16 8 50 6 T 91 50 T 49 94 T 8 50"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.85"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
+      {/* Wordmark with the concentric rings centered behind it */}
+      <span className="relative inline-flex items-center justify-center px-2.5 py-1">
+        <Rings className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[200%] w-auto -translate-x-1/2 -translate-y-1/2 transition-transform duration-500 group-hover:scale-105" />
+        <span className="font-sans text-[1.05rem] font-extrabold uppercase leading-none tracking-[-0.02em] sm:text-[1.1rem]">
+          <span style={{ color: GREEN }}>Green</span>
+          <span className={`ml-1 ${ink}`}>Circle</span>
         </span>
-
       </span>
+      {showTagline && (
+        <span className={`mt-1 text-[8px] font-bold uppercase tracking-[0.2em] ${ink}`}>
+          Join the circle and grow together
+        </span>
+      )}
     </Link>
   );
 }
 
-export function Mark({ className = '' }: { className?: string }) {
+/** Concentric green rings (the "circle" emblem). */
+function Rings({ className = '' }: { className?: string }) {
+  const radii = [49, 41.8, 34.6, 27.4, 20.2, 13];
   return (
-    <svg
-      viewBox="0 0 100 100"
-      className={className}
-      role="img"
-      aria-hidden
-      preserveAspectRatio="xMidYMid meet"
-    >
-      <path
-        d="M 18 52
-           Q 22 16 52 14
-           T 86 50
-           T 50 86
-           T 18 52
-           Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="6.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-      />
+    <svg viewBox="0 0 100 100" className={className} role="img" aria-hidden preserveAspectRatio="xMidYMid meet">
+      {radii.map((r, i) => (
+        <circle key={i} cx="50" cy="50" r={r} fill="none" stroke={GREEN} strokeWidth="1.3" />
+      ))}
     </svg>
   );
 }
+
+export { Rings as Mark };
