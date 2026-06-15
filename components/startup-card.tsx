@@ -2,12 +2,13 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 import type { Startup } from '@/types';
 import { ImageWithFallback } from '@/components/image-withfallback';
-import { HandpickedMark } from '@/components/editorial/handpicked-mark';
-import { SectionKicker } from '@/components/editorial/section-kicker';
 import { displayStartupStage } from '@/lib/startup-stage';
 import { startupDetailHref } from '@/lib/startup-detail-href';
+import { computeSignalScore, type SignalScoreInput } from '@/lib/signal-score';
+import { bandColor } from '@/components/investor/signal-score-ring';
 
 interface StartupCardProps {
   startup: Startup;
@@ -15,15 +16,9 @@ interface StartupCardProps {
 }
 
 /**
- * Editorial startup card. Reads as a magazine-archive item, not a database
- * row. No shields, no dark navy header, no "View Details" CTA — the whole
- * card is the link.
- *
- * Two layouts:
- *   - `grid`  (default) — vertical card for the featured homepage grid and
- *                         the directory grid view.
- *   - `row`               — horizontal editorial row for the directory's
- *                         default list view.
+ * Startup card — polished, data-rich, and it surfaces the Green Circle Signal
+ * Score (readiness portion, computed from the profile). The whole card is the
+ * link. Two layouts: `grid` (vertical) and `row` (horizontal list).
  */
 export function StartupCard({ startup, variant = 'grid' }: StartupCardProps) {
   if (variant === 'row') return <RowCard startup={startup} />;
@@ -33,63 +28,42 @@ export function StartupCard({ startup, variant = 'grid' }: StartupCardProps) {
 /* -------------------------------------------------------------------------- */
 
 function GridCard({ startup }: { startup: Startup }) {
-  const initials = getInitials(startup.name);
   const stageLabel = displayStartupStage(startup.stage);
   const href = startupDetailHref(startup);
-  const isSeekingInvestment = ['idea', 'pre-seed', 'seed'].includes(startup.stage || '');
+  const seeking = ['idea', 'pre-seed', 'seed'].includes(startup.stage || '');
+  const signal = computeSignalScore(toSignalInput(startup));
+  const color = sectorColor(startup.sector);
 
   return (
     <StartupCardShell
       href={href}
-      className="group flex flex-col h-full bg-paper-tint rounded-lg border border-rule p-6 transition-all duration-300 hover:border-ink hover:-translate-y-0.5"
+      className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-rule bg-paper p-5 pt-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-forest/40 hover:shadow-md"
     >
-      <div className="flex items-center justify-between">
-        <SectionKicker>{startup.sector || 'Startup'}</SectionKicker>
-        {isSeekingInvestment && (
-          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-forest/10 text-forest text-[10px] font-semibold uppercase tracking-wider">
-            Seeking Investment
-          </span>
-        )}
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: color }} />
+
+      <div className="flex items-start justify-between gap-3">
+        <Logo logo={startup.logo} name={startup.name} size={52} />
+        <SignalChip score={signal.overall} label={signal.label} />
       </div>
 
-      <LogoBlock
-        logo={startup.logo}
-        initials={initials}
-        name={startup.name}
-      />
-
-      <h3 className="mt-5 font-sans text-[1.35rem] font-semibold leading-snug text-ink tracking-tight group-hover:text-forest transition-colors text-balance">
+      <h3 className="mt-4 text-lg font-semibold leading-snug tracking-tight text-ink transition-colors group-hover:text-forest text-balance">
         {startup.name}
       </h3>
 
-      <p className="mt-3 text-[0.975rem] text-ink-muted leading-[1.55] line-clamp-3 text-pretty">
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {startup.sector && <Tag color={color}>{startup.sector}</Tag>}
+        {stageLabel && <Tag>{stageLabel}</Tag>}
+        {seeking && <Tag tone="forest">Seeking investment</Tag>}
+      </div>
+
+      <p className="mt-3 text-sm leading-[1.55] text-ink-muted line-clamp-3 text-pretty">
         {startup.description || 'Profile in progress.'}
       </p>
 
       <div className="flex-1" />
 
-      <div className="mt-8 pt-5 border-t border-rule-soft flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-ink-faint">
-        {startup.location && (
-          <span className="truncate">{startup.location}</span>
-        )}
-        {startup.foundedYear && (
-          <>
-            <Dot />
-            <span>Founded {startup.foundedYear}</span>
-          </>
-        )}
-        {stageLabel && (
-          <>
-            <Dot />
-            <span>{stageLabel}</span>
-          </>
-        )}
-        {startup.employees && (
-          <>
-            <Dot />
-            <span>{startup.employees} people</span>
-          </>
-        )}
+      <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-rule-soft pt-4 text-xs text-ink-muted">
+        <Meta startup={startup} />
       </div>
     </StartupCardShell>
   );
@@ -98,80 +72,116 @@ function GridCard({ startup }: { startup: Startup }) {
 /* -------------------------------------------------------------------------- */
 
 function RowCard({ startup }: { startup: Startup }) {
-  const initials = getInitials(startup.name);
   const stageLabel = displayStartupStage(startup.stage);
   const href = startupDetailHref(startup);
-  const isSeekingInvestment = ['idea', 'pre-seed', 'seed'].includes(startup.stage || '');
+  const seeking = ['idea', 'pre-seed', 'seed'].includes(startup.stage || '');
+  const signal = computeSignalScore(toSignalInput(startup));
+  const color = sectorColor(startup.sector);
 
   return (
     <StartupCardShell
       href={href}
-      className="group grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_auto] gap-5 sm:gap-8 items-start py-8 border-b border-rule-soft transition-colors hover:bg-paper-tint/60 -mx-4 px-4 rounded-md"
+      className="group relative grid grid-cols-[auto_1fr_auto] items-center gap-5 px-5 py-5 transition-colors hover:bg-paper-deep/40 sm:gap-7"
     >
-      <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-md bg-paper-deep border border-rule flex items-center justify-center overflow-hidden shrink-0">
-        {startup.logo ? (
-          <ImageWithFallback
-            src={startup.logo}
-            alt={`${startup.name} logo`}
-            width={80}
-            height={80}
-            className="w-full h-full object-contain p-2"
-          />
-        ) : (
-          <span
-            className="font-display text-2xl text-ink-faint font-medium"
-            style={{ fontVariationSettings: '"opsz" 48, "SOFT" 50' }}
-          >
-            {initials}
-          </span>
-        )}
-      </div>
+      <span aria-hidden className="absolute bottom-3 left-0 top-3 w-1 rounded-full" style={{ backgroundColor: color }} />
+
+      <Logo logo={startup.logo} name={startup.name} size={64} />
 
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
-          <SectionKicker>{startup.sector || 'Startup'}</SectionKicker>
-          {isSeekingInvestment && (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-forest/10 text-forest text-[10px] font-semibold uppercase tracking-wider">
-              Seeking Investment
-            </span>
-          )}
+        <div className="flex items-center gap-2.5">
+          <h3 className="truncate text-lg font-semibold leading-snug tracking-tight text-ink transition-colors group-hover:text-forest sm:text-xl">
+            {startup.name}
+          </h3>
+          {seeking && <Tag tone="forest">Seeking</Tag>}
         </div>
 
-        <h3 className="font-sans text-xl sm:text-[1.4rem] font-semibold leading-snug text-ink tracking-tight group-hover:text-forest transition-colors text-balance">
-          {startup.name}
-        </h3>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {startup.sector && <Tag color={color}>{startup.sector}</Tag>}
+          {stageLabel && <Tag>{stageLabel}</Tag>}
+        </div>
 
-        <p className="mt-1.5 text-[0.975rem] text-ink-muted leading-[1.6] line-clamp-2 text-pretty max-w-none pr-4 sm:pr-8">
+        <p className="mt-2 max-w-2xl text-sm leading-[1.6] text-ink-muted line-clamp-2 text-pretty">
           {startup.description || 'Profile in progress.'}
         </p>
 
-        <div className="mt-4 flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-ink-faint">
-          {startup.location && <span>{startup.location}</span>}
-          {startup.foundedYear && (
-            <>
-              <Dot />
-              <span>Founded {startup.foundedYear}</span>
-            </>
-          )}
-          {stageLabel && (
-            <>
-              <Dot />
-              <span>{stageLabel}</span>
-            </>
-          )}
-          {startup.employees && (
-            <>
-              <Dot />
-              <span>{startup.employees} people</span>
-            </>
-          )}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+          <Meta startup={startup} />
         </div>
       </div>
 
-      <div className="hidden sm:flex items-center text-ink-faint group-hover:text-forest transition-colors pt-1">
-        <span className="font-display text-xl">&rarr;</span>
+      <div className="flex flex-col items-end gap-3 self-stretch">
+        <SignalChip score={signal.overall} label={signal.label} />
+        <div className="flex-1" />
+        <ArrowUpRight className="h-5 w-5 text-ink-faint transition-colors group-hover:text-forest" />
       </div>
     </StartupCardShell>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+
+function SignalChip({ score, label }: { score: number; label: string }) {
+  const color = bandColor(score);
+  return (
+    <div
+      className="flex items-center gap-1.5 rounded-full border border-rule bg-paper-tint px-2 py-1"
+      title={`Signal Score ${score} · ${label}`}
+    >
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+      <span className="text-sm font-bold leading-none tabular-nums" style={{ color }}>
+        {score}
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Signal</span>
+    </div>
+  );
+}
+
+function Tag({
+  children,
+  tone = 'neutral',
+  color,
+}: {
+  children: ReactNode;
+  tone?: 'neutral' | 'forest';
+  color?: string;
+}) {
+  if (color) {
+    return (
+      <span
+        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize"
+        style={{ color, backgroundColor: `${color}18`, borderColor: `${color}40` }}
+      >
+        {children}
+      </span>
+    );
+  }
+  const cls =
+    tone === 'forest'
+      ? 'border-forest/30 bg-forest/10 text-forest'
+      : 'border-rule bg-paper-tint text-ink-muted';
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${cls}`}>
+      {children}
+    </span>
+  );
+}
+
+function Meta({ startup }: { startup: Startup }) {
+  const items = [
+    startup.location && firstToken(startup.location),
+    startup.foundedYear && `Founded ${startup.foundedYear}`,
+    startup.employees && `${startup.employees} people`,
+  ].filter(Boolean) as string[];
+
+  return (
+    <>
+      {items.map((item, i) => (
+        <span key={i} className="inline-flex items-center gap-3">
+          {i > 0 && <Dot />}
+          <span className="truncate">{item}</span>
+        </span>
+      ))}
+    </>
   );
 }
 
@@ -202,34 +212,22 @@ function StartupCardShell({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-
-function LogoBlock({
-  logo,
-  initials,
-  name,
-}: {
-  logo?: string;
-  initials: string;
-  name: string;
-}) {
+function Logo({ logo, name, size }: { logo?: string; name: string; size: number }) {
   return (
-    <div className="mt-6 h-14 w-14 rounded-md bg-paper border border-rule flex items-center justify-center overflow-hidden">
-      {logo ? (
+    <div
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-rule bg-paper"
+      style={{ height: size, width: size }}
+    >
+      {logo && !logo.includes('placeholder') ? (
         <ImageWithFallback
           src={logo}
           alt={`${name} logo`}
-          width={56}
-          height={56}
-          className="w-full h-full object-contain p-1.5"
+          width={size}
+          height={size}
+          className="h-full w-full object-contain p-1.5"
         />
       ) : (
-        <span
-          className="font-display text-xl text-ink-faint font-medium"
-          style={{ fontVariationSettings: '"opsz" 36, "SOFT" 50' }}
-        >
-          {initials}
-        </span>
+        <span className="text-sm font-bold text-ink-muted">{getInitials(name)}</span>
       )}
     </div>
   );
@@ -237,6 +235,20 @@ function LogoBlock({
 
 function Dot() {
   return <span aria-hidden className="h-1 w-1 rounded-full bg-ink-faint/60" />;
+}
+
+function firstToken(location: string): string {
+  return location?.split(',')[0]?.trim() || location;
+}
+
+// Single cohesive brand accent (forest) — one calm colour, not a rainbow.
+const SECTOR_PALETTE = ['#3a7d55'];
+
+export function sectorColor(sector?: string): string {
+  if (!sector) return SECTOR_PALETTE[0];
+  let h = 0;
+  for (let i = 0; i < sector.length; i++) h = (h * 31 + sector.charCodeAt(i)) >>> 0;
+  return SECTOR_PALETTE[h % SECTOR_PALETTE.length];
 }
 
 function getInitials(name: string): string {
@@ -247,4 +259,24 @@ function getInitials(name: string): string {
     .slice(0, 2)
     .map((word) => word[0]?.toUpperCase())
     .join('');
+}
+
+/** Adapt a directory Startup into the Signal Score input (readiness only). */
+function toSignalInput(s: Startup): SignalScoreInput {
+  return {
+    logo: s.logo,
+    description: s.description,
+    founders: s.founders,
+    website: s.website,
+    pitch: s.pitch,
+    achievements: Array.isArray(s.achievements) ? s.achievements : s.achievements ? [s.achievements] : [],
+    images: s.images,
+    video: null,
+    revenue: s.revenue,
+    employees: s.employees,
+    foundedYear: typeof s.foundedYear === 'number' ? String(s.foundedYear) : s.foundedYear,
+    stage: s.stage,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  };
 }

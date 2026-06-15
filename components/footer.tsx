@@ -1,15 +1,14 @@
 import Link from 'next/link';
 import { Logo } from './logo/greencirlce-logo';
-import { Rule } from './editorial/rule';
 
 export function Footer() {
   return (
-    <footer className="dark border-t border-rule bg-paper-tint text-ink">
+    <footer className="dark border-t border-neutral-800 bg-neutral-950">
       <div className="mx-auto max-w-7xl px-6 pt-20 pb-10">
         <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
             <Logo />
-            <p className="mt-6 max-w-xs text-sm leading-relaxed text-ink-muted text-pretty">
+            <p className="mt-6 max-w-xs text-sm leading-relaxed text-neutral-400 text-pretty">
               The central directory for Ethiopian innovation. Built so
               founders can be discovered, understood, and reached.
             </p>
@@ -32,16 +31,14 @@ export function Footer() {
           </FooterColumn>
         </div>
 
-        <div className="mt-16">
-          <Rule />
-        </div>
+        <div className="mt-16 border-t border-neutral-800" />
 
-        <div className="mt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs text-ink-faint">
+        <div className="mt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs text-neutral-500">
           <p>
             &copy; {new Date().getFullYear()} Green Circle. Built in Addis
             Ababa.
           </p>
-          <p className="uppercase tracking-[0.14em] font-semibold">
+          <p className="uppercase tracking-[0.14em] font-semibold text-neutral-400">
             Discoverable · Browsable · Reachable
           </p>
         </div>
@@ -59,7 +56,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h4 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-faint">
+      <h4 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
         {title}
       </h4>
       <ul className="space-y-3">{children}</ul>
@@ -78,7 +75,7 @@ function FooterLink({
     <li>
       <Link
         href={href}
-        className="text-sm text-ink-muted hover:text-forest transition-colors"
+        className="text-sm text-neutral-400 hover:text-forest transition-colors"
       >
         {children}
       </Link>

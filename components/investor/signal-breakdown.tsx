@@ -19,7 +19,7 @@ export function SignalBreakdownBars({ breakdown }: { breakdown: SignalBreakdown 
           <div key={key}>
             <div className="flex items-center justify-between text-[11px] mb-0.5">
               <span className="text-ink-muted">
-                {label} <span className="text-ink-faint">· {weight}</span>
+                {label} <span className="text-ink-muted/70">· {weight}</span>
               </span>
               <span className="font-medium text-ink">{value}</span>
             </div>

@@ -38,6 +38,25 @@ function band(roundUsd: number): 'early' | 'breakout' | 'scaleup' {
   return 'early';
 }
 
+// Plausible geographic spread of Ethiopian startups (Addis-dominant, with
+// secondary hubs) — SAMPLE data so the coverage map isn't a single bubble.
+// Shares reflect the real concentration; deterministic for a given total.
+const CITY_SHARES: { city: string; share: number }[] = [
+  { city: 'Addis Ababa', share: 0.62 },
+  { city: 'Hawassa', share: 0.08 },
+  { city: 'Bahir Dar', share: 0.07 },
+  { city: 'Dire Dawa', share: 0.06 },
+  { city: 'Adama', share: 0.05 },
+  { city: 'Mekelle', share: 0.05 },
+  { city: 'Jimma', share: 0.04 },
+  { city: 'Gondar', share: 0.03 },
+];
+
+export function mockCityDistribution(total: number): { city: string; count: number }[] {
+  const t = Math.max(total, 16);
+  return CITY_SHARES.map(({ city, share }) => ({ city, count: Math.max(1, Math.round(t * share)) }));
+}
+
 export function buildEcosystemMock(companies: PublicCompany[]): EcosystemMock {
   const rows = companies.map((c) => ({ c, m: dealroomMock(c) }));
 

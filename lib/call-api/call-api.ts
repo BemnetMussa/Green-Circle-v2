@@ -120,23 +120,29 @@ export const userStartups = async (): Promise<Startup[]> => {
 
 // ✅ GET ALL STARTUPS
 export const filterStartup = async (): Promise<Startup[]> => {
-  try {
-    const res = await fetch(`/api/startups`);
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.details || errorData.error || 'Failed to fetch startups');
+  // Retry once after a short delay — smooths transient cold-start failures
+  // (first request racing API compile / Mongo connection) so users don't see
+  // a spurious "Failed to fetch startups".
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 700));
+      const res = await fetch(`/api/startups`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || 'Failed to fetch startups');
+      }
+
+      const data: StartupListResponse = await res.json();
+      if (!data.startups || data.startups.length === 0) return [];
+      return data.startups.map(transform);
+    } catch (error) {
+      lastError = error;
     }
-
-    const data: StartupListResponse = await res.json();
-
-    if (!data.startups || data.startups.length === 0) return [];
-
-    return data.startups.map(transform);
-
-  } catch (error) {
-    console.error('Error filtering startups:', error);
-    throw error;
   }
+
+  console.error('Error filtering startups:', lastError);
+  throw lastError;
 };
 
 

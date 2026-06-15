@@ -10,6 +10,12 @@ import { STARTUP_STAGES, STARTUP_STAGE_LABELS } from '@/lib/startup-stage';
 import { DealflowTable } from '@/components/investor/dealflow-table';
 import type { DealCardData } from '@/components/investor/deal-card';
 import {
+  mockDealEngagement,
+  mockEngagementSummary,
+  mockSectorMomentum,
+  mockMonthlyGrowth,
+} from '@/lib/investor-engagement-mock';
+import {
   BarChart,
   Bar,
   LineChart,
@@ -212,8 +218,32 @@ export default function InvestorAnalyticsPage() {
   const hasFilter = sector !== 'all' || stage !== 'all' || minScore > 0 || sort !== 'score';
   const exportHref = `/api/investor/dealflow/export?${queryString()}`;
 
+  // Until real investor traffic accrues, fill engagement with deterministic
+  // SAMPLE figures so the cockpit isn't empty (clearly tagged "Sample").
+  const mockEng = mockEngagementSummary(deals);
+  const engUnique = hasEngagement ? data.engagement.uniqueViews : mockEng.uniqueViews;
+  const tableDeals: DealCardData[] = hasEngagement
+    ? deals
+    : deals.map((d) => ({ ...d, engagement: mockDealEngagement(d._id, d.signal.overall) }));
+  const eng = hasEngagement
+    ? {
+        mostViewed: data.marketIntelligence.mostViewed,
+        topSearches: data.engagement.topSearchTerms,
+        avgTime: data.engagement.avgTimeOnPage,
+      }
+    : { mostViewed: mockEng.mostViewed, topSearches: mockEng.topSearches, avgTime: mockEng.avgTimeSec };
+
+  // Charts with no real data yet fall back to sample so they don't read empty.
+  const realMomentum = data.marketIntelligence.sectorMomentum.filter((s) => s.growthRate != null);
+  const momentum = realMomentum.length > 0 ? { rows: realMomentum, sample: false } : { rows: mockSectorMomentum(), sample: true };
+  const realGrowthTotal = data.marketIntelligence.monthlyGrowth.reduce((s, m) => s + m.count, 0);
+  const growth =
+    realGrowthTotal >= 8
+      ? { rows: data.marketIntelligence.monthlyGrowth, sample: false }
+      : { rows: mockMonthlyGrowth(), sample: true };
+
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-paper-deep">
       <Header currentPage="analytics" />
 
       {/* Hero */}
@@ -237,7 +267,7 @@ export default function InvestorAnalyticsPage() {
           <Kpi label="Seeking Investment" value={data.dealFlow.seekingInvestment} sub="Active deals" />
           <Kpi label="New This Week" value={data.dealFlow.newThisWeek} sub="Fresh opportunities" />
           <Kpi label="Startups Tracked" value={data.dealFlow.totalTracked} sub="Approved profiles" />
-          <Kpi icon={<Eye className="h-4 w-4" />} label="Profile Views" value={hasEngagement ? data.engagement.uniqueViews : '—'} sub={hasEngagement ? 'Unique, last 30d' : 'Accruing'} />
+          <Kpi icon={<Eye className="h-4 w-4" />} label="Profile Views" value={engUnique} sub={hasEngagement ? 'Unique, last 30d' : 'Sample · last 30d'} />
         </div>
 
         {/* Deal flow — primary surface */}
@@ -287,17 +317,23 @@ export default function InvestorAnalyticsPage() {
           ) : deals.length === 0 ? (
             <Empty>No startups match these filters. Try widening your thesis or lowering the minimum score.</Empty>
           ) : (
-            <DealflowTable deals={deals} watchlist={watchlist} onWatchlist={addToWatchlist} />
+            <DealflowTable deals={tableDeals} watchlist={watchlist} onWatchlist={addToWatchlist} />
+          )}
+          {!dealsLoading && deals.length > 0 && !hasEngagement && (
+            <p className="mt-3 text-xs text-ink-muted">
+              <span className="font-semibold">Sample:</span> demand figures (views, saved, trend) are
+              placeholder until live investor traffic accrues. Signal Score, stage and sector are real.
+            </p>
           )}
         </Section>
 
         {/* Market signals — focused charts */}
-        <Section title="Market signals" icon={<BarChart3 className="h-5 w-5" />} subtitle="Where quality, stage and momentum sit across the tracked ecosystem. Real data.">
+        <Section title="Market signals" icon={<BarChart3 className="h-5 w-5" />} subtitle="Quality, stage, sector momentum and growth across the tracked ecosystem. Charts tagged “Sample” use placeholder data until real volume builds.">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <ChartCard title="Signal Score Distribution">
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={data.marketIntelligence.signalScoreDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d9d2c1" />
                   <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} />
@@ -313,7 +349,7 @@ export default function InvestorAnalyticsPage() {
             <ChartCard title="Stage Funnel">
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={data.marketIntelligence.stageFunnel} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E5E5" />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#d9d2c1" />
                   <XAxis type="number" hide allowDecimals={false} />
                   <YAxis dataKey="label" type="category" width={92} tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} startups`, 'Count']} />
@@ -322,84 +358,83 @@ export default function InvestorAnalyticsPage() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Sector Momentum (30-day growth)">
-              {data.marketIntelligence.sectorMomentum.length === 0 ? (
-                <Empty>No sector data yet.</Empty>
-              ) : (
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={data.marketIntelligence.sectorMomentum} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E5E5" />
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" width={92} tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipStyle}
-                      formatter={(v, _n, p) => [`${v ?? 0}% growth`, `${p.payload.startupCount} startups`]} />
-                    <Bar dataKey="growthRate" fill="#C5A028" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+            <ChartCard title="Sector Momentum (30-day growth)" tag={momentum.sample ? 'Sample' : undefined}>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={momentum.rows} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#d9d2c1" />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} unit="%" />
+                  <YAxis dataKey="name" type="category" width={92} tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle}
+                    formatter={(v, _n, p) => [`${v ?? 0}% growth`, `${p.payload.startupCount} startups`]} cursor={{ fill: '#00000008' }} />
+                  <Bar dataKey="growthRate" fill="#C5A028" radius={[0, 4, 4, 0]} barSize={18} />
+                </BarChart>
+              </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Startups Added (12 months)">
+            <ChartCard title="Startups Added (12 months)" tag={growth.sample ? 'Sample' : undefined}>
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={data.marketIntelligence.monthlyGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
+                <LineChart data={growth.rows} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d9d2c1" />
                   <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#5e584e' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#5e584e' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} joined`, 'New']} />
-                  <Line type="monotone" dataKey="count" stroke="#1F4F3F" strokeWidth={2} dot={{ r: 3, fill: '#1F4F3F' }} activeDot={{ r: 5, fill: '#C5A028' }} />
+                  <Line type="monotone" dataKey="count" stroke="#1F4F3F" strokeWidth={2.5} dot={{ r: 3, fill: '#1F4F3F' }} activeDot={{ r: 6, fill: '#C5A028' }} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
         </Section>
 
-        {/* Engagement — only when there's real activity */}
-        {hasEngagement && (
-          <Section title="Investor engagement" icon={<Eye className="h-5 w-5" />} subtitle="How investors are interacting with the platform, last 7–30 days.">
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm lg:col-span-2">
-                <h3 className="mb-4 text-base font-semibold text-ink">Most Viewed (7 days)</h3>
-                <div className="space-y-2.5">
-                  {data.marketIntelligence.mostViewed.length === 0 ? (
-                    <Empty>No views yet this week.</Empty>
-                  ) : (
-                    data.marketIntelligence.mostViewed.map((s, i) => (
-                      <div key={i} className="flex items-center justify-between rounded-lg border border-rule bg-paper-tint p-3">
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm font-semibold text-ink-muted">#{i + 1}</span>
-                          <div>
-                            <p className="font-medium text-ink">{s.name}</p>
-                            <p className="text-xs text-ink-muted capitalize">{s.sector}</p>
-                          </div>
-                        </div>
-                        <span className="inline-flex items-center gap-1 text-sm text-ink-muted">
-                          <Eye className="h-4 w-4" /> {s.uniqueViews}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-              <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm">
-                <h3 className="mb-4 text-base font-semibold text-ink">Top Searches</h3>
-                {data.engagement.topSearchTerms.length === 0 ? (
-                  <Empty>No searches yet.</Empty>
+        {/* Engagement — real once traffic accrues, sample until then */}
+        <Section
+          title="Investor engagement"
+          icon={<Eye className="h-5 w-5" />}
+          subtitle="What investors are viewing and searching across the platform."
+          tag={hasEngagement ? 'Real' : 'Sample'}
+        >
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm lg:col-span-2">
+              <h3 className="mb-4 text-base font-semibold text-ink">Most viewed startups</h3>
+              <div className="space-y-2.5">
+                {eng.mostViewed.length === 0 ? (
+                  <Empty>No views yet.</Empty>
                 ) : (
-                  <div className="space-y-2">
-                    {data.engagement.topSearchTerms.map((t, i) => (
-                      <div key={i} className="flex justify-between text-sm">
-                        <span className="text-ink">{t.term}</span>
-                        <span className="text-xs text-ink-muted">{t.count}</span>
+                  eng.mostViewed.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-lg border border-rule bg-paper-tint p-3">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-sm font-semibold text-ink-muted">#{i + 1}</span>
+                        <div>
+                          <p className="font-medium text-ink">{s.name}</p>
+                          <p className="text-xs text-ink-muted capitalize">{s.sector}</p>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ink">
+                        <Eye className="h-4 w-4 text-ink-muted" /> {s.uniqueViews}
+                      </span>
+                    </div>
+                  ))
                 )}
-                <h3 className="mb-2 mt-6 text-base font-semibold text-ink">Avg Time on Profile</h3>
-                <p className="text-2xl font-bold text-ink tabular-nums">{data.engagement.avgTimeOnPage}s</p>
               </div>
             </div>
-          </Section>
-        )}
+            <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm">
+              <h3 className="mb-4 text-base font-semibold text-ink">Top searches</h3>
+              {eng.topSearches.length === 0 ? (
+                <Empty>No searches yet.</Empty>
+              ) : (
+                <div className="space-y-2.5">
+                  {eng.topSearches.map((t, i) => (
+                    <div key={i} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="capitalize text-ink">{t.term}</span>
+                      <span className="rounded bg-paper-tint px-2 py-0.5 text-xs font-semibold tabular-nums text-ink-muted">{t.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <h3 className="mb-2 mt-6 text-base font-semibold text-ink">Avg time on profile</h3>
+              <p className="text-2xl font-bold tabular-nums text-ink">{eng.avgTime}s</p>
+            </div>
+          </div>
+        </Section>
       </main>
 
       <Footer />
@@ -409,7 +444,7 @@ export default function InvestorAnalyticsPage() {
 
 const tooltipStyle = {
   backgroundColor: '#fff',
-  border: '1px solid #E5E5E5',
+  border: '1px solid #d9d2c1',
   borderRadius: '8px',
   fontSize: '12px',
 };
@@ -457,11 +492,13 @@ function Section({
   title,
   icon,
   subtitle,
+  tag,
   children,
 }: {
   title: string;
   icon: React.ReactNode;
   subtitle?: string;
+  tag?: 'Real' | 'Sample';
   children: React.ReactNode;
 }) {
   return (
@@ -470,6 +507,17 @@ function Section({
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-forest/10 p-2 text-forest">{icon}</div>
           <h2 className="text-xl font-semibold text-ink">{title}</h2>
+          {tag && (
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                tag === 'Real'
+                  ? 'border-forest/25 bg-forest/10 text-forest-soft'
+                  : 'border-gold/40 bg-gold-faint text-ink-muted'
+              }`}
+            >
+              {tag}
+            </span>
+          )}
         </div>
         {subtitle && <p className="mt-2 max-w-2xl text-sm text-ink-muted">{subtitle}</p>}
       </div>
@@ -491,10 +539,21 @@ function Kpi({ icon, label, value, sub }: { icon?: React.ReactNode; label: strin
   );
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({ title, tag, children }: { title: string; tag?: 'Real' | 'Sample'; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm">
-      <h3 className="mb-5 text-base font-semibold text-ink">{title}</h3>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold text-ink">{title}</h3>
+        {tag && (
+          <span
+            className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+              tag === 'Real' ? 'border-forest/25 bg-forest/10 text-forest-soft' : 'border-gold/40 bg-gold-faint text-ink-muted'
+            }`}
+          >
+            {tag}
+          </span>
+        )}
+      </div>
       {children}
     </div>
   );

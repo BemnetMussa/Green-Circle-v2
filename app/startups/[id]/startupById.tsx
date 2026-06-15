@@ -14,8 +14,12 @@ import {
   Calendar,
   Users,
   CheckCircle2,
-  Image as ImageIcon,
   AlertCircle,
+  Layers,
+  Clock,
+  Banknote,
+  Award,
+  Sparkles,
 } from 'lucide-react';
 import type { Startup as StartupType } from '@/types';
 import { getStartupById } from '@/lib/call-api/call-api';
@@ -23,6 +27,9 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { ImageWithFallback } from '@/components/image-withfallback';
 import { displayStartupStage } from '@/lib/startup-stage';
+import { computeSignalScore, type SignalScoreInput } from '@/lib/signal-score';
+import { SignalScoreRing, bandColor } from '@/components/investor/signal-score-ring';
+import { SignalBreakdownBars } from '@/components/investor/signal-breakdown';
 import Loading from '@/app/loading';
 
 export default function StartupDetailPage({ id }: { id: string }) {
@@ -76,14 +83,20 @@ export default function StartupDetailPage({ id }: { id: string }) {
   const achievements = normalizeAchievements(startup.achievements);
   const initials = getInitials(startup.name);
   const stageLabel = displayStartupStage(startup.stage);
+  const signal = computeSignalScore(toSignalInput(startup));
+  const scoreColor = bandColor(signal.overall);
+
+  const yearNum = parseInt(String(startup.foundedYear ?? ''), 10);
+  const yearsOperating =
+    Number.isFinite(yearNum) && yearNum > 1990 ? new Date().getFullYear() - yearNum : null;
+  const hasRevenue = Boolean(startup.revenue && String(startup.revenue).trim());
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
       <Header currentPage="startups" />
 
-      <main className="flex-1 pb-32">
-        {/* Navigation & Context */}
-        <div className="mx-auto max-w-6xl px-5 pt-8 sm:px-8 mb-12">
+      <main className="flex-1 pb-24">
+        <div className="mx-auto max-w-6xl px-5 pt-8 sm:px-8">
           <Link
             href="/startups"
             className="group inline-flex items-center gap-2 text-sm font-medium text-ink-muted hover:text-ink transition-colors"
@@ -94,54 +107,48 @@ export default function StartupDetailPage({ id }: { id: string }) {
         </div>
 
         <section className="mx-auto max-w-6xl px-5 sm:px-8">
-          {/* Header Row */}
-          <div className="flex flex-col md:flex-row gap-8 lg:gap-10 items-start">
-            <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-2xl bg-paper-deep border border-rule flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-              {startup.logo ? (
+          {/* Hero */}
+          <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-rule bg-paper shadow-sm sm:h-28 sm:w-28">
+              {startup.logo && !startup.logo.includes('placeholder') ? (
                 <ImageWithFallback
                   src={startup.logo}
                   alt={`${startup.name} logo`}
-                  width={128}
-                  height={128}
-                  className="w-full h-full object-contain p-3"
+                  width={112}
+                  height={112}
+                  className="h-full w-full object-contain p-3"
                 />
               ) : (
-                <span className="font-sans font-semibold text-3xl text-ink-faint">
-                  {initials}
-                </span>
+                <span className="text-3xl font-bold text-ink-muted">{initials}</span>
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-forest">
-                  {startup.sector || 'Technology startup'}
-                </span>
-              </div>
-              
-              <h1 className="font-sans text-4xl sm:text-5xl lg:text-[3.5rem] font-bold tracking-tight leading-none text-ink text-balance mb-5">
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-forest-soft">
+                {startup.sector || 'Technology startup'}
+              </span>
+              <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-ink text-balance sm:text-4xl">
                 {startup.name}
               </h1>
-              
-              <p className="text-xl sm:text-[1.35rem] font-medium text-ink-muted leading-relaxed max-w-3xl text-pretty">
-                {startup.pitch || "Startup pitch and core mission currently being compiled."}
+              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted text-pretty">
+                {startup.pitch || startup.description || 'Startup pitch and core mission currently being compiled.'}
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                {/* Primary CTA: Revenue-driving connection request */}
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <button
-                  className="h-11 px-6 inline-flex items-center justify-center gap-2 rounded-lg bg-forest hover:bg-forest-soft text-paper text-sm font-medium shadow-sm transition-all active:scale-[0.98]"
-                  onClick={() => alert('Connect feature coming soon. Express interest in this startup to unlock full founder contact details.')}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-forest px-6 text-sm font-medium text-paper shadow-sm transition-all hover:bg-forest-soft active:scale-[0.98]"
+                  onClick={() =>
+                    alert('Connect feature coming soon. Express interest in this startup to unlock full founder contact details.')
+                  }
                 >
                   <TrendingUp className="h-4 w-4" />
                   Apply to Connect
                 </button>
-
                 {startup.website && (
                   <Link
                     href={startup.website}
                     target="_blank"
-                    className="h-11 px-6 inline-flex items-center justify-center gap-2 rounded-lg bg-ink hover:bg-ink-muted text-paper text-sm font-medium shadow-sm transition-all active:scale-[0.98]"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-rule bg-paper-tint px-6 text-sm font-medium text-ink shadow-sm transition-all hover:border-ink/30 active:scale-[0.98]"
                   >
                     <Globe className="h-4 w-4" />
                     Visit website
@@ -149,138 +156,180 @@ export default function StartupDetailPage({ id }: { id: string }) {
                 )}
               </div>
             </div>
-          </div>
 
-          <hr className="my-14 border-t-2 border-rule border-dashed" />
-
-          {/* Quick Stats Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-            <Stat label="Current Stage" value={stageLabel || 'Undisclosed'} icon={<TrendingUp />} />
-            <Stat label="Founded" value={startup.foundedYear?.toString() || '—'} icon={<Calendar />} />
-            <Stat label="Team Size" value={startup.employees || '—'} icon={<Users />} />
-            <Stat label="Location" value={startup.location || '—'} icon={<MapPin />} />
-          </div>
-
-          {/* Main Content Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-20">
-            
-            {/* Left Column (Description & Gallery) */}
-            <div className="lg:col-span-8 space-y-16">
-              
-              <section>
-                <h2 className="font-sans text-2xl font-bold tracking-tight text-ink mb-6">About the startup</h2>
-                <div className="text-lg leading-[1.75] text-ink-muted space-y-5 text-pretty">
-                  {startup.description ? (
-                    <p>{startup.description}</p>
-                  ) : (
-                    <p className="italic text-ink-faint">Background and product information coming soon.</p>
-                  )}
-                </div>
-              </section>
-
-              <section>
-                <h2 className="font-sans text-2xl font-bold tracking-tight text-ink mb-6">Visual Overview</h2>
-                {startup.images && startup.images.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {startup.images.map((img, i) => (
-                      <div key={i} className={`relative aspect-video rounded-xl overflow-hidden border border-rule/50 bg-paper-deep ${i === 0 ? 'md:col-span-2' : ''}`}>
-                         <ImageWithFallback src={img} alt={`${startup.name} gallery image ${i + 1}`} fill className="object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl bg-paper-tint border border-rule border-dashed p-12 flex flex-col items-center justify-center text-center">
-                    <ImageIcon className="h-8 w-8 text-ink-faint mb-3" strokeWidth={1.5} />
-                    <p className="text-[0.95rem] font-medium text-ink-muted">No images provided yet.</p>
-                  </div>
-                )}
-              </section>
-
+            {/* Signal Score badge */}
+            <div className="flex shrink-0 flex-col items-center gap-2 self-start rounded-xl border border-rule bg-paper p-5 shadow-sm">
+              <SignalScoreRing score={signal.overall} label={signal.label} size={88} />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Signal Score</span>
             </div>
+          </div>
 
-            {/* Right Column (Founders & Track Record) */}
-            <aside className="lg:col-span-4 space-y-12">
-              
+          {/* Key facts */}
+          <div className="mt-10 grid grid-cols-2 gap-5 rounded-xl border border-rule bg-paper-tint p-6 shadow-sm md:grid-cols-4">
+            <Stat label="Current stage" value={stageLabel || 'Undisclosed'} icon={<Layers />} />
+            <Stat label="Founded" value={startup.foundedYear?.toString() || '—'} icon={<Calendar />} />
+            <Stat label="Team size" value={startup.employees || '—'} icon={<Users />} />
+            <Stat label="Location" value={firstToken(startup.location) || '—'} icon={<MapPin />} />
+          </div>
+
+          {/* Body */}
+          <div className="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
+            <div className="space-y-14 lg:col-span-8">
+              {/* About */}
               <section>
-                <h2 className="font-sans text-xl font-bold tracking-tight text-ink mb-6">The Founders</h2>
-                {startup.founders && startup.founders.length > 0 ? (
-                  <div className="space-y-8">
-                    {startup.founders.map((founder, i) => (
-                      <div key={i} className="flex flex-col gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-14 w-14 rounded-full overflow-hidden bg-paper-deep border border-rule shrink-0 relative">
-                             {founder.image ? (
-                               <ImageWithFallback src={founder.image} alt={founder.name} fill className="object-cover" sizes="56px" />
-                             ) : (
-                               <div className="h-full w-full flex items-center justify-center font-sans font-semibold text-lg text-ink-faint">
-                                 {getInitials(founder.name)}
-                               </div>
-                             )}
-                          </div>
-                          <div>
-                            <h3 className="font-sans text-base font-bold text-ink">{founder.name || 'Anonymous'}</h3>
-                            <p className="text-[11px] font-bold uppercase tracking-widest text-forest/80 mt-0.5">{founder.role || 'Founder'}</p>
-                          </div>
-                        </div>
-                        
-                        {founder.bio && (
-                          <p className="text-sm leading-relaxed text-ink-muted">
-                            {founder.bio}
-                          </p>
-                        )}
-                        
-                        <div className="flex items-center gap-3">
-                           {founder.email && (
-                             <a href={`mailto:${founder.email}`} className="text-ink-muted hover:text-ink transition-colors p-1" title="Email">
-                               <Mail className="h-4 w-4" strokeWidth={2} />
-                             </a>
-                           )}
-                           {founder.linkedin && (
-                             <a href={founder.linkedin} target="_blank" className="text-ink-muted hover:text-ink transition-colors p-1" title="LinkedIn">
-                               <Linkedin className="h-4 w-4" strokeWidth={2} />
-                             </a>
-                           )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <h2 className="mb-5 text-2xl font-bold tracking-tight text-ink">About</h2>
+                {startup.description ? (
+                  <p className="text-lg leading-[1.75] text-ink-muted text-pretty">{startup.description}</p>
                 ) : (
-                  <p className="text-sm text-ink-muted italic">Founder profiles pending.</p>
+                  <p className="italic text-ink-faint">Background and product information coming soon.</p>
                 )}
               </section>
 
-              {achievements.length > 0 && (
-                <section>
-                  <h2 className="font-sans text-xl font-bold tracking-tight text-ink mb-6">Track Record</h2>
-                  <ul className="space-y-4">
-                     {achievements.map((item, i) => (
-                       <li key={i} className="flex gap-3">
-                          <CheckCircle2 className="h-5 w-5 text-forest shrink-0 mt-0.5" strokeWidth={1.5} />
-                          <span className="text-[0.95rem] leading-relaxed text-ink-muted">
-                            {item}
-                          </span>
-                       </li>
-                     ))}
+              {/* Traction & track record */}
+              <section>
+                <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold tracking-tight text-ink">
+                  <Sparkles className="h-6 w-6 text-forest" strokeWidth={1.75} />
+                  Traction &amp; track record
+                </h2>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <TractionTile
+                    icon={<Clock className="h-4 w-4" />}
+                    label="Operating"
+                    value={yearsOperating != null ? `${yearsOperating} yr${yearsOperating === 1 ? '' : 's'}` : '—'}
+                    sub={startup.foundedYear ? `Since ${startup.foundedYear}` : 'Founding year pending'}
+                  />
+                  <TractionTile
+                    icon={<Banknote className="h-4 w-4" />}
+                    label="Revenue"
+                    value={hasRevenue ? String(startup.revenue) : '—'}
+                    sub={hasRevenue ? 'Disclosed' : 'Undisclosed'}
+                  />
+                  <TractionTile
+                    icon={<Award className="h-4 w-4" />}
+                    label="Milestones"
+                    value={achievements.length > 0 ? String(achievements.length) : '—'}
+                    sub={achievements.length > 0 ? 'Recorded' : 'None listed yet'}
+                  />
+                </div>
+
+                <h3 className="mb-4 mt-10 text-sm font-bold uppercase tracking-wider text-ink-muted">
+                  What they&apos;ve done
+                </h3>
+                {achievements.length > 0 ? (
+                  <ul className="space-y-3">
+                    {achievements.map((item, i) => (
+                      <li
+                        key={i}
+                        className="flex gap-3 rounded-lg border border-rule bg-paper p-4 shadow-sm"
+                      >
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-forest" strokeWidth={1.75} />
+                        <span className="text-[0.95rem] leading-relaxed text-ink">{item}</span>
+                      </li>
+                    ))}
                   </ul>
+                ) : (
+                  <p className="rounded-lg border border-dashed border-rule bg-paper-tint p-6 text-sm text-ink-muted">
+                    No milestones recorded yet — traction highlights appear here as the founder adds them.
+                  </p>
+                )}
+              </section>
+
+              {/* Gallery */}
+              {startup.images && startup.images.length > 0 && (
+                <section>
+                  <h2 className="mb-5 text-2xl font-bold tracking-tight text-ink">Gallery</h2>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {startup.images.map((img, i) => (
+                      <div
+                        key={i}
+                        className={`relative aspect-video overflow-hidden rounded-xl border border-rule bg-paper-deep ${i === 0 ? 'md:col-span-2' : ''}`}
+                      >
+                        <ImageWithFallback src={img} alt={`${startup.name} image ${i + 1}`} fill className="object-cover" />
+                      </div>
+                    ))}
+                  </div>
                 </section>
               )}
+            </div>
 
-              <div className="pt-8 border-t border-rule text-sm text-ink-faint">
-                Profile updated {new Date(startup.updatedAt).toLocaleDateString()}
+            {/* Aside */}
+            <aside className="space-y-10 lg:col-span-4">
+              {/* Signal breakdown */}
+              <div className="rounded-xl border border-rule bg-paper p-6 shadow-sm">
+                <div className="mb-5 flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-ink">How the score is built</h2>
+                  <span className="text-2xl font-bold tabular-nums" style={{ color: scoreColor }}>
+                    {signal.overall}
+                  </span>
+                </div>
+                <SignalBreakdownBars breakdown={signal.breakdown} />
+                <p className="mt-4 text-xs leading-relaxed text-ink-muted">
+                  A transparent 0–100 readiness signal computed from the profile. Investor demand grows as
+                  investors view and save this startup.
+                </p>
               </div>
 
+              {/* Founders */}
+              <section>
+                <h2 className="mb-5 text-base font-semibold text-ink">Founders</h2>
+                {startup.founders && startup.founders.length > 0 ? (
+                  <div className="space-y-6">
+                    {startup.founders.map((founder, i) => (
+                      <div key={i} className="flex flex-col gap-3 rounded-xl border border-rule bg-paper p-4 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-rule bg-paper-deep">
+                            {founder.image ? (
+                              <ImageWithFallback src={founder.image} alt={founder.name} fill className="object-cover" sizes="48px" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-ink-muted">
+                                {getInitials(founder.name)}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="truncate text-sm font-bold text-ink">{founder.name || 'Anonymous'}</h3>
+                            <p className="mt-0.5 text-[11px] font-bold uppercase tracking-widest text-forest-soft">
+                              {founder.role || 'Founder'}
+                            </p>
+                          </div>
+                        </div>
+                        {founder.bio && <p className="text-sm leading-relaxed text-ink-muted">{founder.bio}</p>}
+                        <div className="flex items-center gap-2">
+                          {founder.email && (
+                            <a href={`mailto:${founder.email}`} className="rounded p-1 text-ink-muted transition-colors hover:text-forest" title="Email">
+                              <Mail className="h-4 w-4" strokeWidth={2} />
+                            </a>
+                          )}
+                          {founder.linkedin && (
+                            <a href={founder.linkedin} target="_blank" className="rounded p-1 text-ink-muted transition-colors hover:text-forest" title="LinkedIn">
+                              <Linkedin className="h-4 w-4" strokeWidth={2} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm italic text-ink-muted">Founder profiles pending.</p>
+                )}
+              </section>
+
+              <div className="border-t border-rule pt-6 text-sm text-ink-muted">
+                Profile updated {new Date(startup.updatedAt).toLocaleDateString()}
+              </div>
             </aside>
           </div>
         </section>
       </main>
 
       {/* Footer CTA */}
-      <div className="bg-paper-tint border-t border-rule py-16 text-center">
-        <h3 className="font-sans text-xl font-bold text-ink mb-3">Discover more companies</h3>
-        <p className="text-sm text-ink-muted mb-8">Green Circle is the living registry of Ethiopian innovation.</p>
+      <div className="border-t border-rule bg-paper-tint py-16 text-center">
+        <h3 className="mb-3 text-xl font-bold text-ink">Discover more companies</h3>
+        <p className="mb-8 text-sm text-ink-muted">Green Circle is the living registry of Ethiopian innovation.</p>
         <Link
           href="/startups"
-          className="inline-flex items-center gap-2 h-11 px-6 rounded-lg border border-ink text-ink font-medium hover:bg-ink hover:text-paper transition-all"
+          className="inline-flex h-11 items-center gap-2 rounded-lg border border-ink px-6 font-medium text-ink transition-all hover:bg-ink hover:text-paper"
         >
           View full directory
           <ArrowRight className="h-4 w-4" />
@@ -309,13 +358,11 @@ function StartupFetchErrorView({
         >
           <AlertCircle className="h-6 w-6" strokeWidth={1.5} />
         </div>
-        <h1 className="mt-6 font-sans text-xl font-semibold tracking-tight text-ink">
+        <h1 className="mt-6 text-xl font-semibold tracking-tight text-ink">
           Couldn&apos;t load this profile
         </h1>
-        <p className="mt-3 font-sans text-base leading-relaxed text-ink-muted text-pretty">
-          {message}
-        </p>
-        <p className="mt-2 font-sans text-sm leading-relaxed text-ink-faint text-pretty">
+        <p className="mt-3 text-base leading-relaxed text-ink-muted text-pretty">{message}</p>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted text-pretty">
           This usually isn&apos;t about the company being removed — try again, or open the
           directory from the link below.
         </p>
@@ -323,13 +370,13 @@ function StartupFetchErrorView({
           <button
             type="button"
             onClick={onRetry}
-            className="inline-flex h-11 items-center justify-center rounded-md bg-forest px-6 font-sans text-sm font-medium text-paper transition-colors hover:bg-forest-soft"
+            className="inline-flex h-11 items-center justify-center rounded-md bg-forest px-6 text-sm font-medium text-paper transition-colors hover:bg-forest-soft"
           >
             Try again
           </button>
           <Link
             href="/startups"
-            className="inline-flex h-11 items-center justify-center rounded-md border border-ink px-6 font-sans text-sm font-medium text-ink transition-colors hover:bg-paper-tint"
+            className="inline-flex h-11 items-center justify-center rounded-md border border-ink px-6 text-sm font-medium text-ink transition-colors hover:bg-paper-tint"
           >
             Back to directory
           </Link>
@@ -342,23 +389,68 @@ function StartupFetchErrorView({
 
 /* -------------------------------------------------------------------------- */
 
-function Stat({ label, value, icon }: { label: string, value: string, icon: React.ReactNode }) {
+function Stat({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="h-8 w-8 rounded flex items-center justify-center text-ink-faint border border-rule bg-paper-tint shrink-0">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-rule bg-paper text-ink-muted">
         {icon}
       </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-widest font-bold text-ink-faint mb-1">{label}</p>
-        <p className="font-semibold text-ink leading-tight">{value}</p>
+      <div className="min-w-0">
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-ink-muted">{label}</p>
+        <p className="truncate font-semibold leading-tight text-ink">{value}</p>
       </div>
     </div>
   );
 }
 
-function normalizeAchievements(
-  input: string | string[] | undefined,
-): string[] {
+function TractionTile({
+  icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-rule bg-paper p-5 shadow-sm">
+      <div className="flex items-center gap-2 text-ink-muted">
+        {icon}
+        <span className="text-[11px] font-bold uppercase tracking-wider">{label}</span>
+      </div>
+      <p className="mt-2 text-xl font-bold text-ink">{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-ink-muted">{sub}</p>}
+    </div>
+  );
+}
+
+function toSignalInput(s: StartupType): SignalScoreInput {
+  return {
+    logo: s.logo,
+    description: s.description,
+    founders: s.founders,
+    website: s.website,
+    pitch: s.pitch,
+    achievements: Array.isArray(s.achievements) ? s.achievements : s.achievements ? [s.achievements] : [],
+    images: s.images,
+    video: null,
+    revenue: s.revenue,
+    employees: s.employees,
+    foundedYear: typeof s.foundedYear === 'number' ? String(s.foundedYear) : s.foundedYear,
+    stage: s.stage,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  };
+}
+
+function firstToken(location?: string): string {
+  if (!location) return '';
+  return location.split(',')[0]?.trim() || location;
+}
+
+function normalizeAchievements(input: string | string[] | undefined): string[] {
   if (!input) return [];
   if (Array.isArray(input)) return input.filter(Boolean);
   return input

@@ -7,7 +7,6 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { StartupCard } from '@/components/startup-card';
 import { SectionKicker } from '@/components/editorial/section-kicker';
-import { Rule } from '@/components/editorial/rule';
 import { Startup } from '@/types';
 import { filterStartup } from '@/lib/call-api/call-api';
 import {
@@ -134,119 +133,96 @@ export default function StartupsForm() {
       <Header currentPage="startups" />
 
       <main className="flex-1">
-        <div className="mx-auto max-w-[90rem] px-6 lg:px-12 pt-16 pb-24">
-          {loadError && (
-            <div
-              role="alert"
-              aria-live="polite"
-              className="mb-10 flex flex-col gap-4 rounded-lg border border-rule bg-paper-tint px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
-            >
-              <div className="flex gap-3 text-left">
-                <AlertCircle
-                  className="h-5 w-5 shrink-0 text-forest mt-0.5"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
-                <p className="text-sm leading-relaxed text-ink">{loadError}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setReloadKey((k) => k + 1)}
-                className="h-10 shrink-0 rounded-md bg-forest px-4 font-sans text-sm font-medium text-paper transition-colors hover:bg-forest-soft sm:self-center"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          <SectionKicker>The Directory</SectionKicker>
-          <h1 className="mt-5 text-4xl sm:text-[2.75rem] font-sans font-semibold tracking-tight text-ink max-w-[20ch] leading-tight text-balance">
-            Every startup on Green Circle.
-          </h1>
-          <p className="mt-6 max-w-[56ch] text-lg text-ink-muted leading-[1.6] text-pretty">
-            {loadError ? (
-              <>
-                When the directory loads, you can search and filter every public
-                listing.
-              </>
-            ) : total > 0 ? (
-              <>
-                {total} founder{total === 1 ? '' : 's'} featured. Updated
-                weekly. Reach out to any of them directly.
-              </>
-            ) : (
-              <>
-                No startups featured yet. Check back next week — we add one or
-                two each time we meet a founder.
-              </>
-            )}
-          </p>
-
-          <div className="mt-10">
-            <Rule />
+        {/* Header band — light, distinct zone */}
+        <div className="border-b border-rule bg-paper-tint">
+          <div className="mx-auto w-full max-w-[90rem] px-6 lg:px-10 py-10">
+            <SectionKicker>The Directory</SectionKicker>
+            <h1 className="mt-4 text-3xl sm:text-4xl font-sans font-semibold tracking-tight text-ink text-balance">
+              Every startup on Green Circle.
+            </h1>
+            <p className="mt-3 max-w-[60ch] text-base text-ink-muted leading-[1.6]">
+              {loadError
+                ? 'When the directory loads, you can search and filter every public listing.'
+                : total > 0
+                  ? `${total} startup${total === 1 ? '' : 's'} across ${sectors.length} sector${sectors.length === 1 ? '' : 's'}. Each scored on investment signal — reach out directly.`
+                  : 'No startups featured yet. Check back next week — we add one or two each time we meet a founder.'}
+            </p>
           </div>
+        </div>
 
-          <div className="mt-12 flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
-            {/* Sidebar Left */}
-            <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-10">
-              <div className="relative w-full">
-                <Search
-                  className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint"
-                  strokeWidth={1.5}
-                />
-                <input
-                  type="search"
-                  placeholder="Search startups"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-11 pl-11 pr-4 bg-paper-tint border border-rule rounded-md text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest transition-colors"
-                />
+        {/* Body — darker backdrop so cards and the filter panel lift off it */}
+        <div className="bg-paper-deep">
+          <div className="mx-auto w-full max-w-[90rem] px-6 lg:px-10 py-10">
+            {loadError && (
+              <div
+                role="alert"
+                aria-live="polite"
+                className="mb-8 flex flex-col gap-4 rounded-lg border border-rule bg-paper-tint px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5"
+              >
+                <div className="flex gap-3 text-left">
+                  <AlertCircle className="h-5 w-5 shrink-0 text-forest mt-0.5" strokeWidth={1.75} aria-hidden />
+                  <p className="text-sm leading-relaxed text-ink">{loadError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReloadKey((k) => k + 1)}
+                  className="h-10 shrink-0 rounded-md bg-forest px-4 font-sans text-sm font-medium text-paper transition-colors hover:bg-forest-soft sm:self-center"
+                >
+                  Retry
+                </button>
               </div>
+            )}
 
-              <div className="flex flex-col gap-8">
-                <FilterCheckboxGroup
-                  label="Sector"
-                  options={sectors}
-                  selected={selectedSectors}
-                  onToggle={(value) =>
-                    setSelectedSectors((prev) => toggleList(prev, value))
-                  }
-                />
+            <div className="flex flex-col items-start gap-8 lg:flex-row">
+              {/* Filter panel — sticks below the 64px header; scrolls internally if tall */}
+              <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64">
+                <div className="flex flex-col gap-6 rounded-xl border border-rule bg-paper-tint p-5 shadow-sm lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+                  <div className="relative w-full">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" strokeWidth={1.5} />
+                    <input
+                      type="search"
+                      placeholder="Search startups"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full h-10 pl-10 pr-3 bg-paper border border-rule rounded-md text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest transition-colors"
+                    />
+                  </div>
 
-                {locations.length > 0 && (
                   <FilterCheckboxGroup
-                    label="Location"
-                    options={locations}
-                    selected={selectedLocations}
-                    onToggle={(value) =>
-                      setSelectedLocations((prev) => toggleList(prev, value))
-                    }
+                    label="Sector"
+                    options={sectors}
+                    selected={selectedSectors}
+                    onToggle={(value) => setSelectedSectors((prev) => toggleList(prev, value))}
                   />
-                )}
+                  {locations.length > 0 && (
+                    <FilterCheckboxGroup
+                      label="Location"
+                      options={locations}
+                      selected={selectedLocations}
+                      onToggle={(value) => setSelectedLocations((prev) => toggleList(prev, value))}
+                    />
+                  )}
+                  {stagesInData.length > 0 && (
+                    <FilterCheckboxGroup
+                      label="Stage"
+                      options={stagesInData}
+                      selected={selectedStages}
+                      onToggle={(value) => setSelectedStages((prev) => toggleList(prev, value))}
+                      formatLabel={stageCheckboxLabel}
+                    />
+                  )}
+                </div>
+              </aside>
 
-                {stagesInData.length > 0 && (
-                  <FilterCheckboxGroup
-                    label="Stage"
-                    options={stagesInData}
-                    selected={selectedStages}
-                    onToggle={(value) =>
-                      setSelectedStages((prev) => toggleList(prev, value))
-                    }
-                    formatLabel={stageCheckboxLabel}
-                  />
-                )}
-              </div>
-            </aside>
-
-            {/* Main Content Title & View */}
-            <div className="flex-1 min-w-0 w-full">
-              <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="h-8 flex items-center">
-                  {hasActiveFilter && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-ink-muted">
-                        {filtered.length} match{filtered.length === 1 ? '' : 'es'}
-                      </span>
+              {/* Results */}
+              <div className="min-w-0 w-full flex-1">
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-ink-muted">
+                      <span className="font-semibold text-ink">{filtered.length}</span>{' '}
+                      {filtered.length === 1 ? 'startup' : 'startups'}
+                    </span>
+                    {hasActiveFilter && (
                       <button
                         onClick={() => {
                           setSearchTerm('');
@@ -254,19 +230,16 @@ export default function StartupsForm() {
                           setSelectedLocations([]);
                           setSelectedStages([]);
                         }}
-                        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink underline underline-offset-4 decoration-rule hover:decoration-ink transition-colors"
+                        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors"
                       >
                         <X className="h-3.5 w-3.5" />
                         Clear filters
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <ViewToggle view={view} onChange={setView} />
                 </div>
-                
-                <ViewToggle view={view} onChange={setView} />
-              </div>
 
-              <div>
                 {filtered.length === 0 ? (
                   <EmptyState
                     onClear={() => {
@@ -278,38 +251,30 @@ export default function StartupsForm() {
                     hasFilter={hasActiveFilter}
                   />
                 ) : view === 'list' ? (
-                  <div className="flex flex-col">
+                  <div className="overflow-hidden rounded-xl border border-rule bg-paper-tint shadow-sm divide-y divide-rule-soft">
                     {visible.map((startup, idx) => (
-                      <StartupCard
-                        key={`${startup._id}-${idx}`}
-                        startup={startup}
-                        variant="row"
-                      />
+                      <StartupCard key={`${startup._id}-${idx}`} startup={startup} variant="row" />
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 lg:gap-8">
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {visible.map((startup, idx) => (
-                      <StartupCard
-                        key={`${startup._id}-${idx}`}
-                        startup={startup}
-                        variant="grid"
-                      />
+                      <StartupCard key={`${startup._id}-${idx}`} startup={startup} variant="grid" />
                     ))}
                   </div>
                 )}
-              </div>
 
-              {filtered.length > 0 && visibleCount < filtered.length && (
-                <div className="mt-14 flex justify-center">
-                  <button
-                    onClick={() => setVisibleCount((v) => v + 12)}
-                    className="h-11 px-6 rounded-md border border-ink text-ink hover:bg-ink hover:text-paper transition-colors text-sm font-medium"
-                  >
-                    Load more
-                  </button>
-                </div>
-              )}
+                {filtered.length > 0 && visibleCount < filtered.length && (
+                  <div className="mt-10 flex justify-center">
+                    <button
+                      onClick={() => setVisibleCount((v) => v + 12)}
+                      className="h-11 px-6 rounded-md border border-ink text-ink hover:bg-ink hover:text-paper transition-colors text-sm font-medium"
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -348,18 +313,20 @@ function FilterCheckboxGroup({
   selected,
   onToggle,
   formatLabel = (o: string) => o,
+  dotColor,
 }: {
   label: string;
   options: string[];
   selected: string[];
   onToggle: (value: string) => void;
   formatLabel?: (option: string) => string;
+  dotColor?: (option: string) => string;
 }) {
   const baseId = useId();
   if (options.length === 0) return null;
   return (
-    <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
-      <legend className="mb-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-faint">
+    <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+      <legend className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
         {label}
       </legend>
       <div className="flex flex-col gap-0.5" role="group" aria-label={label}>
@@ -370,7 +337,7 @@ function FilterCheckboxGroup({
             <label
               key={`${option}-${idx}`}
               htmlFor={id}
-              className={`flex cursor-pointer items-start gap-2.5 rounded-[0.4rem] px-3 py-2 text-sm transition-colors hover:bg-paper-tint ${
+              className={`flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-paper-deep/50 ${
                 checked ? 'text-ink' : 'text-ink-muted hover:text-ink'
               }`}
             >
@@ -379,11 +346,12 @@ function FilterCheckboxGroup({
                 type="checkbox"
                 checked={checked}
                 onChange={() => onToggle(option)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-rule text-forest focus:ring-2 focus:ring-forest/30 focus:ring-offset-0"
+                className="h-4 w-4 shrink-0 rounded border-rule text-forest focus:ring-2 focus:ring-forest/30 focus:ring-offset-0"
               />
-              <span
-                className={`leading-snug ${checked ? 'font-medium' : 'font-normal'}`}
-              >
+              {dotColor && (
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: dotColor(option) }} />
+              )}
+              <span className={`leading-snug ${checked ? 'font-medium' : 'font-normal'}`}>
                 {formatLabel(option)}
               </span>
             </label>

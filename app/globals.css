@@ -208,7 +208,13 @@
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11", "cv02";
   }
-  h1, h2, h3, h4, .font-display {
+  /* One type system: Source Sans for all headings/UI (consistent across every
+     page). The Fraunces serif is now an opt-in accent via `.font-display`, not
+     the default for every heading. */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.015em;
+  }
+  .font-display {
     font-family: var(--font-display);
     font-feature-settings: "liga", "kern";
     letter-spacing: -0.015em;

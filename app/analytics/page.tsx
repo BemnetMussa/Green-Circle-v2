@@ -3,47 +3,14 @@
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
-import { ArrowRight, LayoutList, BarChart3 } from 'lucide-react';
+import { LayoutList, BarChart3 } from 'lucide-react';
 import { CompanyTable } from '@/components/analytics/company-table';
-import { EcosystemDashboard } from '@/components/analytics/ecosystem-dashboard';
-
-interface AnalyticsData {
-  overview: {
-    totalStartups: number;
-    totalSectors: number;
-    avgTeamSize: number;
-    seekingInvestment: number;
-  };
-  sectors: { name: string; count: number }[];
-  stages: { name: string; count: number; percentage: number }[];
-  locations: { name: string; count: number }[];
-  monthlyGrowth: { month: string; count: number }[];
-  foundingYears: { year: string; count: number }[];
-  teamSizeDistribution: { size: string; count: number }[];
-  stageVelocity: { from: string; to: string; count: number }[];
-}
-
-const COLORS = ['#1F4F3F', '#C5A028', '#2D5A4A', '#D4B84A', '#3A7A5F', '#E8D070', '#4A9A7A', '#F5E5A0'];
+import { EcosystemDashboard, type EcosystemData } from '@/components/analytics/ecosystem-dashboard';
 
 const SHELL = 'mx-auto w-full max-w-[112rem] px-5 sm:px-8 lg:px-10';
 
 export default function AnalyticsPage() {
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [data, setData] = useState<EcosystemData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'companies' | 'stats'>('companies');
@@ -69,13 +36,13 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-paper flex flex-col">
       <Header />
 
-      <main className="flex-1 pb-24">
+      <main className="flex-1">
         {/* Header band */}
-        <div className="bg-paper-deep border-b border-rule">
+        <div className="bg-paper-tint border-b border-rule">
           <div className={`${SHELL} py-10`}>
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-forest">
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-forest-soft">
                   Ecosystem Intelligence
                 </span>
                 <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-ink tracking-tight">
@@ -94,18 +61,20 @@ export default function AnalyticsPage() {
         </div>
 
         {view === 'companies' ? (
-          <div className={`${SHELL} py-8`}>
+          <div className={`${SHELL} py-8 pb-24`}>
             <CompanyTable />
           </div>
         ) : (
-          <div className={`${SHELL} py-10`}>
-            <StatsView data={data} loading={loading} error={error} />
+          <div className="bg-paper-deep border-b border-rule">
+            <div className={`${SHELL} py-10 pb-20`}>
+              <StatsView data={data} loading={loading} error={error} />
+            </div>
           </div>
         )}
 
         {/* CTA */}
         <div className={`${SHELL}`}>
-          <div className="mt-12 text-center py-12 border-t border-rule">
+          <div className="my-12 text-center py-12 border-t border-rule">
             <h3 className="text-xl font-semibold text-ink mb-3">Looking for deeper insights?</h3>
             <p className="text-ink-muted mb-6 max-w-lg mx-auto">
               Investors get access to deal flow metrics, founder demographics, and downloadable reports.
@@ -186,160 +155,15 @@ function StatsView({
   loading,
   error,
 }: {
-  data: AnalyticsData | null;
+  data: EcosystemData | null;
   loading: boolean;
   error: string | null;
 }) {
   if (loading) {
-    return <div className="py-20 text-center text-ink-muted animate-pulse">Loading stats…</div>;
+    return <div className="py-20 text-center text-ink-muted animate-pulse">Loading ecosystem…</div>;
   }
   if (error || !data) {
     return <div className="py-20 text-center text-red-600">Failed to load stats. Please try again.</div>;
   }
-
-  return (
-    <>
-      {/* Dealroom-style ecosystem dashboard (KPIs, funding, map, VCs, rounds) */}
-      <EcosystemDashboard />
-
-      {/* Detailed real charts */}
-      <div className="mt-16 mb-6 flex items-center gap-4">
-        <h3 className="font-sans text-xs font-bold uppercase tracking-[0.12em] text-ink-muted whitespace-nowrap">
-          Detailed breakdown · real data
-        </h3>
-        <div className="h-px flex-1 bg-rule" />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ChartCard title="Startups by Sector">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data.sectors} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E5E5" />
-              <XAxis type="number" hide />
-              <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#666' }} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E5E5E5', borderRadius: '8px', fontSize: '12px' }}
-              />
-              <Bar dataKey="count" fill="#1F4F3F" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="By Funding Stage">
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={data.stages} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="count">
-                {data.stages.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E5E5E5', borderRadius: '8px', fontSize: '12px' }}
-                formatter={(value, name, props) => {
-                  const percentage = props?.payload?.percentage || 0;
-                  return [`${value} (${percentage}%)`, 'Startups'];
-                }}
-              />
-              <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="New Startups Added (12 Months)">
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={data.monthlyGrowth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#666' }} axisLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#666' }} axisLine={false} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E5E5E5', borderRadius: '8px', fontSize: '12px' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="#1F4F3F"
-                strokeWidth={2}
-                dot={{ fill: '#1F4F3F', strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, fill: '#C5A028' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Startups by Location">
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={data.locations}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#666' }} axisLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#666' }} axisLine={false} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E5E5E5', borderRadius: '8px', fontSize: '12px' }}
-              />
-              <Bar dataKey="count" fill="#C5A028" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Team Size Distribution">
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie data={data.teamSizeDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="count">
-                {data.teamSizeDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E5E5E5', borderRadius: '8px', fontSize: '12px' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex flex-wrap gap-3 justify-center mt-2">
-            {data.teamSizeDistribution.map((item, i) => (
-              <span key={i} className="text-xs text-ink-muted flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                {item.size} ({item.count})
-              </span>
-            ))}
-          </div>
-        </ChartCard>
-
-        <ChartCard title="Funding Stage Progression">
-          <div className="space-y-4 h-[250px] flex flex-col justify-center">
-            {data.stageVelocity.length === 0 ? (
-              <p className="text-sm text-ink-muted text-center">
-                Stage-progression data appears once startups record funding history.
-              </p>
-            ) : (
-              data.stageVelocity.map((stage, i) => (
-                <div key={i} className="relative">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-ink capitalize">{stage.from.replace('-', ' ')}</span>
-                    <span className="text-sm text-forest font-medium">{stage.count} startups</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-rule rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-forest rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min((stage.count / 20) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-ink-faint" />
-                    <span className="text-xs text-ink-muted capitalize whitespace-nowrap">{stage.to.replace('-', ' ')}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ChartCard>
-      </div>
-    </>
-  );
-}
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-paper rounded-xl border border-rule p-6 shadow-sm">
-      <h3 className="text-base font-semibold text-ink mb-6">{title}</h3>
-      {children}
-    </div>
-  );
+  return <EcosystemDashboard data={data} />;
 }
