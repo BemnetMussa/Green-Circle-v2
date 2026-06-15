@@ -1,76 +1,90 @@
-'use client';
-
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { StartupCard } from '@/components/startup-card';
+import { ArrowRight } from 'lucide-react';
 import { Startup } from '@/types';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { HomeDirectoryPreviewCard } from '@/components/home-directory-preview-card';
 
 interface FeaturedStartupsProps {
   startups: Startup[];
+  /** Show placeholder grid while the directory request is in flight */
+  loading?: boolean;
 }
 
-export function FeaturedStartups({ startups }: FeaturedStartupsProps) {
-  // We only want to show the top 3 cards for the "Featured" section
-  const featuredList = startups.slice(0, 6);
+/**
+ * Homepage directory preview — showcase card grid so each startup earns the
+ * space. Sans-first; no HandpickedMark on cards (detail pages stay truthful).
+ */
+export function FeaturedStartups({
+  startups,
+  loading,
+}: FeaturedStartupsProps) {
+  if (!loading && (!startups || startups.length === 0)) return null;
 
-  if (!startups || startups.length === 0) {
-    return null; // Don't render the section if no data exists
-  }
+  const preview = loading ? [] : startups.slice(0, 9);
+  const total = startups?.length ?? 0;
 
   return (
-    <section className="relative py-24 bg-slate-50 overflow-hidden">
-      
-      {/* Background Decoration (Optional subtle gradient blob) */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-emerald-200/20 rounded-full blur-3xl mix-blend-multiply" />
-        <div className="absolute bottom-20 right-20 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl mix-blend-multiply" />
-      </div>
-
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
-        {/* Section Header */}
-        <div className="mb-16 text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-4 py-1.5 shadow-sm mb-2">
-            <Sparkles className="h-4 w-4 text-emerald-500" />
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Ecosystem Highlights
-            </span>
+    <section className="gc-section-directory relative border-t border-rule-soft dark:border-rule">
+      <div className="mx-auto max-w-7xl px-5 py-28 sm:px-8 md:py-32 lg:px-12 lg:py-36 xl:px-16">
+        <header className="mb-12 flex flex-col gap-8 lg:mb-14 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <span className="gc-kicker">Directory preview</span>
+            <div
+              className="mt-3.5 h-1 w-14 rounded-full bg-gold shadow-sm shadow-gold/25"
+              aria-hidden
+            />
+            <h2 className="mt-5 text-2xl font-semibold leading-snug tracking-tight text-ink text-balance md:text-3xl lg:text-[2rem]">
+              Companies on Green Circle today
+            </h2>
+            <p className="mt-3 max-w-2xl font-sans text-sm font-normal leading-relaxed text-ink-muted text-pretty md:text-base">
+              {loading
+                ? 'Pulling the latest listings…'
+                : `${total} public listing${total === 1 ? '' : 's'} — each card opens the full profile. Same data as the directory, built to scan fast then dig in.`}
+            </p>
           </div>
-          
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-            Featured Startups
-          </h2>
-          
-          <p className="text-lg text-slate-600 leading-relaxed">
-            Discover the most promising verified companies shaping the future of 
-            <span className="text-emerald-700 font-medium"> Ethiopia&apos;s </span> 
-            innovation ecosystem.
-          </p>
-        </div>
 
-        {/* Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-          {featuredList.map((startup) => (
-            <div key={startup._id} className="h-full">
-              <StartupCard startup={startup} />
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom Action */}
-        <div className="mt-16 text-center">
-          <Button 
-            asChild 
-            size="lg" 
-            className="bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 hover:text-emerald-700 hover:border-emerald-200 shadow-sm transition-all px-8 h-12 text-base"
+          <Link
+            href="/startups"
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-forest px-6 font-sans text-sm font-medium text-paper shadow-sm transition-colors hover:bg-forest-soft lg:self-auto"
           >
-            <Link href="/startups" className="flex items-center gap-2">
-              Explore All Startups
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+            Browse directory
+            <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </Link>
+        </header>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 xl:grid-cols-3 xl:gap-8">
+          {loading
+            ? Array.from({ length: 6 }, (_, i) => (
+                <div
+                  key={i}
+                  className="flex min-h-[260px] animate-pulse flex-col rounded-2xl border border-rule/60 bg-paper p-6 dark:border-rule dark:bg-paper-deep"
+                >
+                  <div className="h-5 w-24 rounded-full bg-rule/45 dark:bg-rule/30" />
+                  <div className="mt-5 h-16 w-16 rounded-xl bg-rule/40 dark:bg-rule/25" />
+                  <div className="mt-5 h-6 max-w-[85%] rounded-md bg-rule/40 dark:bg-rule/25" />
+                  <div className="mt-3 flex flex-1 flex-col gap-2 pt-1">
+                    <div className="h-3 w-full rounded bg-rule/35 dark:bg-rule/20" />
+                    <div className="h-3 w-full rounded bg-rule/35 dark:bg-rule/20" />
+                    <div className="h-3 w-[80%] rounded bg-rule/35 dark:bg-rule/20" />
+                  </div>
+                  <div className="mt-6 h-3 w-32 rounded bg-rule/30 dark:bg-rule/20" />
+                </div>
+              ))
+            : preview.map((startup, idx) => (
+                <HomeDirectoryPreviewCard key={`${startup._id}-${idx}`} startup={startup} />
+              ))}
         </div>
+
+        {!loading && total > preview.length && (
+          <div className="mt-12 flex justify-center">
+            <Link
+              href="/startups"
+              className="inline-flex h-11 items-center gap-2 rounded-md border border-rule bg-paper px-6 font-sans text-sm font-medium text-ink transition-colors hover:border-forest/40 hover:bg-paper-tint dark:border-rule dark:bg-paper-deep dark:hover:bg-paper"
+            >
+              View all {total} startups
+              <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

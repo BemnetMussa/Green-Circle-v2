@@ -4,6 +4,8 @@
     name: string;
     email: string;
     role: string;
+    linkedin?: string;
+    x?: string;
     nationality?: string;
     phone_number?: string;
     bio?: string;
@@ -25,6 +27,7 @@ export interface Startup {
   _id: string;
   name: string;
   logo?: string;
+  banner?: string;
   website?: string;
   sector?: string;
   location: string;
@@ -35,6 +38,7 @@ export interface Startup {
 
   achievements?: string | string[];
   documents?: string[];
+  images?: string[];
 
   founderRole?: string;
   founderEmail?: string;
@@ -49,7 +53,15 @@ export interface Startup {
   };
 
   revenue?: string;
+  /** Company stage (idea, pre-seed, seed, …). Distinct from editorial `status`. */
+  stage?: string;
   status: string;
+
+  // Deprecated: metInPerson field removed - now showing simple "Listed" date
+  metInPerson?: {
+    city?: string;
+    date: string; // ISO8601 date
+  };
 
   createdAt: string;
   updatedAt: string;
@@ -59,6 +71,8 @@ export interface Startup {
 export interface RawStartup {
   _id: string;
   name: string;
+  logo?: string;
+  banner?: string;
   website?: string;
   sector: string;
   location: string;
@@ -68,11 +82,13 @@ export interface RawStartup {
   pitch: string;
   achievements?: string | string[];
   documents?: string[];
+  images?: string[];
   founders: Founder[];
   founderEmail?: string;
   founderPhone?: string;
   founderRole?: string;
   founderBio?: string;
+  stage?: string;
   status: string;
   createdAt: string;
   updatedAt: string;

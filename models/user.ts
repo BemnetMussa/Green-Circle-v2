@@ -3,7 +3,7 @@ import { Schema, model, models } from 'mongoose';
 export interface IUser {
   name: string;
   email: string;
-  role?: 'startup' | 'user' | 'admin';
+  role?: 'startup' | 'user' | 'admin' | 'investor';
   isValidate?: boolean;
   faydaId?: string;
   createdAt: Date;
@@ -23,7 +23,7 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true },
     role: {
       type: String,
-      enum: ['startup', 'user', 'admin'],
+      enum: ['startup', 'user', 'admin', 'investor'],
       required: true,
       default: 'user',
     },

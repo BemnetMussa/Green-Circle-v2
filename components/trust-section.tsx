@@ -1,69 +1,82 @@
-import { CheckCircle, Users, TrendingUp, Shield } from 'lucide-react';
+import { Database, LayoutList, Map } from 'lucide-react';
 
+const STEPS = [
+  {
+    icon: Database,
+    title: 'We gather data',
+    body: 'What is already in the public record and what founders give us — team, company, traction, story — comes through one intake. Same questions, same shape, so nothing important lives in a stray PDF or a dead link.',
+  },
+  {
+    icon: LayoutList,
+    title: 'We list the startups',
+    body: 'Each team that belongs on Green Circle gets a full profile in the directory: one page per startup, same fields every time. That list is the running inventory of who is building in Ethiopia right now.',
+  },
+  {
+    icon: Map,
+    title: "We map Ethiopia's innovation ecosystem",
+    body: 'From those listings we pull sector, place, and stage into a view you can actually move through — so innovation here stops sounding like gossip in a chat and starts looking like a country-sized map capital and partners can use.',
+  },
+] as const;
+
+const GOLD = '#C5A028';
+
+/** Homepage — vertical pipeline with black spine + gold nodes (no glass shell). */
 export function TrustSection() {
-  const features = [
-    {
-      icon: CheckCircle,
-      title: 'Legally Verified',
-      description:
-        "Every startup is verified against Ethiopia's national Startup Law and business registry.",
-    },
-    {
-      icon: Users,
-      title: 'Vetted Founders',
-      description: 'Comprehensive background checks and Fayda ID verification for all core team members.',
-    },
-    {
-      icon: TrendingUp,
-      title: 'Growth Focused',
-      description: 'We curate scalable businesses with real traction, filtering out noise for investors.',
-    },
-  ];
-
   return (
-    <section className="py-24 bg-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
-        {/* Section Header */}
-        <div className="mb-16 text-center max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 mb-4">
-            <Shield className="h-4 w-4" />
-            <span>Safety First</span>
-          </div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Why Trust Green Circle?
-          </h2>
-          <p className="mt-4 text-lg text-slate-600">
-            We don't just list startups; we certify them. Our rigorous 3-step vetting process ensures quality and transparency.
+    <section className="gc-section-method border-t border-rule-soft dark:border-rule">
+      <div className="mx-auto max-w-2xl px-5 py-20 sm:px-8 md:py-24">
+        <span className="gc-kicker">How it works</span>
+        <h2 className="mt-3 text-2xl font-semibold leading-snug tracking-tight text-ink md:text-[1.65rem]">
+          We gather data. We list the startups. We map the ecosystem.
+        </h2>
+        <div className="mt-5 space-y-4 font-sans text-sm font-normal leading-relaxed text-ink-muted md:text-base">
+          <p>
+            Three steps, in order. We collect what matters from the open web
+            and from founders. We turn that into structured listings on Green
+            Circle.
+          </p>
+          <p>
+            Then we use those listings to show how Ethiopian innovation
+            actually spreads — by sector, by place, by who is building — so
+            anyone looking for capital, credit, or a partner can navigate the
+            country instead of guessing.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <div 
-                key={index} 
-                className="group relative flex flex-col items-center text-center p-8 rounded-2xl bg-slate-50 border border-slate-100 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-100 hover:-translate-y-1"
+        <div className="relative mt-14">
+          <div
+            className="pointer-events-none absolute left-4 top-2 bottom-2 w-px bg-ink/20 dark:bg-ink/35"
+            aria-hidden
+          />
+          <ol className="relative list-none space-y-0 p-0">
+            {STEPS.map(({ icon: Icon, title, body }, i) => (
+              <li
+                key={title}
+                className="relative pb-12 pl-11 last:pb-0 md:pl-12"
               >
-                {/* Icon Container - Starts Grey, turns Green on Hover */}
-                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm border border-slate-200 text-slate-400 transition-colors duration-300 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 group-hover:rotate-3">
-                  <Icon className="h-8 w-8" />
+                <div
+                  className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 bg-paper font-sans text-[11px] font-bold tabular-nums text-ink shadow-sm border-gold dark:bg-paper"
+                  aria-hidden
+                >
+                  {String(i + 1).padStart(2, '0')}
                 </div>
-                
-                <h3 className="mb-3 text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                  {feature.title}
-                </h3>
-                
-                <p className="text-slate-600 leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
-            );
-          })}
+                <div className="min-w-0 pt-0.5">
+                  <h3 className="flex items-start gap-2.5 text-base font-semibold text-ink">
+                    <Icon
+                      className="mt-0.5 h-4 w-4 shrink-0 text-gold"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                    <span>{title}</span>
+                  </h3>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-ink-muted md:text-[0.9375rem]">
+                    {body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
-
       </div>
     </section>
   );

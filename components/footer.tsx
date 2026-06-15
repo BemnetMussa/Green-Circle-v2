@@ -1,90 +1,81 @@
-import Link from "next/link";
-import { Twitter, Linkedin, Facebook, Github } from 'lucide-react';
-import { Logo } from "./logo/greencirlce-logo";
+import Link from 'next/link';
+import { Logo } from './logo/greencirlce-logo';
 
 export function Footer() {
   return (
-    <footer className="bg-slate-950 pt-20 pb-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-4 lg:gap-8">
-          
-          {/* Brand Column */}
-          <div className="col-span-1 md:col-span-1">
-            {/* Dark Mode Logo Adaptation */}
-            <Logo variant="white"/>
-            
-            <p className="text-sm leading-relaxed text-slate-400 mb-6 max-w-xs">
-              The central hub for Ethiopia's innovation ecosystem. Connecting vetted startups with the resources they need to scale.
+    <footer className="dark border-t border-neutral-800 bg-neutral-950">
+      <div className="mx-auto max-w-7xl px-6 pt-20 pb-10">
+        <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr_1fr]">
+          <div>
+            <Logo showTagline />
+            <p className="mt-6 max-w-xs text-sm leading-relaxed text-neutral-400 text-pretty">
+              The central directory for Ethiopian innovation. Built so
+              founders can be discovered, understood, and reached.
             </p>
-
-            {/* Social Icons */}
-            <div className="flex gap-4">
-              <SocialLink href="#" icon={<Twitter className="h-4 w-4" />} label="Twitter" />
-              <SocialLink href="#" icon={<Linkedin className="h-4 w-4" />} label="LinkedIn" />
-              <SocialLink href="#" icon={<Facebook className="h-4 w-4" />} label="Facebook" />
-              <SocialLink href="#" icon={<Github className="h-4 w-4" />} label="GitHub" />
-            </div>
           </div>
 
-          {/* Navigation Columns */}
-          <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-8">
-            <div>
-              <h4 className="mb-6 text-sm font-bold uppercase tracking-wider text-slate-100">Platform</h4>
-              <ul className="space-y-4">
-                <FooterLink href="/startups">Browse Startups</FooterLink>
-                <FooterLink href="/submit">Submit Startup</FooterLink>
-                <FooterLink href="/register">Investors</FooterLink>
-                <FooterLink href="/partners">Partners</FooterLink>
-              </ul>
-            </div>
+          <FooterColumn title="Platform">
+            <FooterLink href="/startups">Directory</FooterLink>
+            <FooterLink href="/submit/verify">Submit a startup</FooterLink>
+            <FooterLink href="/pulse">Updates</FooterLink>
+          </FooterColumn>
 
-            <div>
-              <h4 className="mb-6 text-sm font-bold uppercase tracking-wider text-slate-100">Support</h4>
-              <ul className="space-y-4">
-                <FooterLink href="/help">Help Center</FooterLink>
-                <FooterLink href="/contact">Contact Us</FooterLink>
-                <FooterLink href="/guidelines">Verification Guide</FooterLink>
-                <FooterLink href="/faq">FAQ</FooterLink>
-              </ul>
-            </div>
+          <FooterColumn title="About">
+            {/* <FooterLink href="/about">Who we are</FooterLink> */}
+            <FooterLink href="mailto:hello@greencircle.et">Contact</FooterLink>
+          </FooterColumn>
 
-            <div>
-              <h4 className="mb-6 text-sm font-bold uppercase tracking-wider text-slate-100">Legal</h4>
-              <ul className="space-y-4">
-                <FooterLink href="/privacy">Privacy Policy</FooterLink>
-                <FooterLink href="/terms">Terms of Service</FooterLink>
-                <FooterLink href="/law">Startup Law (Proclamation)</FooterLink>
-                <FooterLink href="/cookies">Cookie Settings</FooterLink>
-              </ul>
-            </div>
-          </div>
+          <FooterColumn title="Legal">
+            <FooterLink href="/privacy">Privacy</FooterLink>
+            <FooterLink href="/terms">Terms</FooterLink>
+          </FooterColumn>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-16 border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-500 text-center md:text-left">
-            &copy; {new Date().getFullYear()} Green Circle. All rights reserved.
+        <div className="mt-16 border-t border-neutral-800" />
+
+        <div className="mt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs text-neutral-500">
+          <p>
+            &copy; {new Date().getFullYear()} Green Circle. Built in Addis
+            Ababa.
           </p>
-          
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>Built in Ethiopia</span>
-            <span className="h-1 w-1 rounded-full bg-emerald-500"></span>
-            <span>Empowering Africa</span>
-          </div>
+          <p className="uppercase tracking-[0.14em] font-semibold text-neutral-400">
+            Discoverable · Browsable · Reachable
+          </p>
         </div>
       </div>
     </footer>
   );
 }
 
-// Helper Components for clean code
-function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+function FooterColumn({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <h4 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+        {title}
+      </h4>
+      <ul className="space-y-3">{children}</ul>
+    </div>
+  );
+}
+
+function FooterLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
     <li>
-      <Link 
-        href={href} 
-        className="text-sm text-slate-400 transition-colors hover:text-emerald-400 hover:underline hover:underline-offset-4"
+      <Link
+        href={href}
+        className="text-sm text-neutral-400 hover:text-forest transition-colors"
       >
         {children}
       </Link>
@@ -92,14 +83,3 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
   );
 }
 
-function SocialLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link 
-      href={href} 
-      aria-label={label}
-      className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-slate-400 transition-all hover:bg-emerald-500 hover:text-white hover:-translate-y-1"
-    >
-      {icon}
-    </Link>
-  );
-}

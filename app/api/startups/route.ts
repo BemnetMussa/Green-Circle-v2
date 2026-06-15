@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDB } from '@/lib/db';
+import { serializeStartupId } from '@/lib/serialize-startup-id';
 import { IUser, User } from '@/models/user';
 import { z } from 'zod';
 import { StartupZodSchema } from '@/zod-validator/validator';
 import { Startup } from '@/models/start-up';
 import { auth } from '@/lib/auth';
+import { recordSearch, recordFilters } from '@/lib/analytics';
 
 // post start-up
 export async function POST(request: NextRequest) {
@@ -63,6 +65,7 @@ export async function POST(request: NextRequest) {
       founderPhone: formData.founderPhone || '',
       founderBio: formData.founderBio || '',
       revenue: formData.revenue || '',
+      stage: formData.stage || '',
       founders: [user._id],
       status: 'pending',
     });
@@ -110,6 +113,7 @@ export async function GET(req: NextRequest) {
       'location',
       'foundedYear',
       'status',
+      'stage',
     ];
 
     let filters: any = {};
@@ -121,7 +125,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (session?.user.role !== 'admin') {
-      filters.status = { $in: ['approved', 'pending'] };
+      filters.status = { $in: ['approved', 'pending', 'active'] };
     }
 
     // Handle allowed filters
@@ -167,8 +171,32 @@ export async function GET(req: NextRequest) {
       filters.founderEmail = { $regex: founderEmail, $options: 'i' };
     }
 
-    // Fetch startups
-    const startups = await Startup.find(filters);
+    // Lean + explicit string _ids so client links are never `/startups/` (empty segment).
+    const docs = await Startup.find(filters).lean();
+    const startups = docs.map((doc) => ({
+      ...doc,
+      _id: serializeStartupId(doc._id),
+    }));
+
+    // Record real search/filter usage so investor "top search terms" and
+    // "popular filters" are backed by data instead of constants. Errors are
+    // swallowed inside the helpers — analytics never blocks the directory.
+    const trackCtx = {
+      userId: session?.user?.id,
+      role: (session?.user as { role?: string } | undefined)?.role,
+      sessionId: req.cookies.get('gc_sid')?.value,
+    };
+    const searchValue = url.searchParams.get('search');
+    if (searchValue) await recordSearch(searchValue, trackCtx);
+    await recordFilters(
+      {
+        sector: url.searchParams.get('sector') || undefined,
+        stage: url.searchParams.get('stage') || undefined,
+        location: url.searchParams.get('location') || undefined,
+        foundedYear: url.searchParams.get('foundedYear') || undefined,
+      },
+      trackCtx
+    );
 
     return NextResponse.json({
       message: 'Startups retrieved successfully.',

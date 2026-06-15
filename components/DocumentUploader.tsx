@@ -143,7 +143,7 @@ export default function DocumentUploader({ onUploaded, type }: Props) {
     Drag & drop files here
   </p>
 
-  <span className="relative text-sm font-medium text-blue-600 dark:text-blue-400 mt-1 after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-blue-600 dark:after:bg-blue-400">
+  <span className="relative text-sm font-medium text-primary dark:text-primary mt-1 after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:w-full after:h-[2px] after:bg-primary dark:after:bg-primary">
     or browse
   </span>
 
@@ -163,7 +163,7 @@ export default function DocumentUploader({ onUploaded, type }: Props) {
               <div className="flex justify-between text-sm mb-1">
                 <span className="font-medium">{upload.file.name}</span>
                 {upload.done ? (
-                  <span className="text-green-600 font-semibold">✅ Done</span>
+                  <span className="text-primary font-semibold">✅ Done</span>
                 ) : (
                   <span className="text-gray-500">{upload.progress}%</span>
                 )}
@@ -172,7 +172,7 @@ export default function DocumentUploader({ onUploaded, type }: Props) {
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                 <div
                   className={`h-full transition-all duration-300 ${
-                    upload.done ? "bg-green-500" : "bg-blue-500"
+                    upload.done ? "bg-primary/100" : "bg-primary/100"
                   }`}
                   style={{ width: `${upload.progress}%` }}
                 />

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { STARTUP_STAGES } from '@/lib/startup-stage';
 // import { ObjectId } from 'mongodb';
 
 export const LoginSchema = z.object({
@@ -14,6 +15,7 @@ export const SignUpSchema = z
     confirmPassword: z
       .string()
       .min(6, 'password should have at least 6 character'),
+    role: z.enum(['user', 'startup', 'investor']),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -79,6 +81,9 @@ export const StartupZodSchema = z.object({
   }),
   terms: z.literal(true, {
     message: 'You must accept the Terms of Service and Privacy Policy.',
+  }),
+  stage: z.enum(STARTUP_STAGES, {
+    message: 'Select where the company is today.',
   }),
 });
 

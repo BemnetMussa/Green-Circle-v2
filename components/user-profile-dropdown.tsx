@@ -45,13 +45,31 @@ export function UserProfileDropdown({ session }: UserProfileDropdownProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none truncate">
               {session?.email || 'User'}
+            </p>
+            <p className="text-xs text-ink-muted capitalize">
+              {session?.role || 'User'}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {session?.role === 'investor' && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link href="/investor/analytics">Investor Dashboard</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/investor/watchlist">Watchlist</Link>
+            </DropdownMenuItem>
+          </>
+        )}
+        {session?.role === 'admin' && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin/analytics">Admin Dashboard</Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link
             href={session?.role === 'startup' ? '/founder-profile' : '/profile'}

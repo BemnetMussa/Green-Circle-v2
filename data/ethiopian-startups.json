@@ -1,0 +1,819 @@
+{
+  "_meta": {
+    "title": "Ethiopian startups — gathered research dataset (DRAFT)",
+    "status": "UNVERIFIED research draft — review before importing or publishing",
+    "compiledDate": "2026-06-14",
+    "rule": "Real, public-sourced entries only. No fabricated funding or valuation numbers. Each record carries sources + a confidence level. Run through docs/data-verification.md (corroborate + human sign-off) before anything goes live.",
+    "schemaNote": "Fields mirror models/start-up.ts for easy import (name, website, sector, location, foundedYear, stage, description). Funding lives under `_funding` (not in the current schema) and is included ONLY when sourced. `_meta.confidence` is high | medium | low; `_meta.sources` lists where it came from. This file is not wired into the app.",
+    "note": "Some entries likely already exist in the live DB (e.g. Chapa, Arifpay, Dodai, Kifiya, Kubik) — dedupe on import. Several current seed rows (e.g. 'Better Auth', 'EduTech Ethiopia', 'HealthLink Ethiopia', 'LogiSmart Ethiopia') appear to be placeholders and could be replaced by these real ones.",
+    "count": 48,
+    "lastFetch": {
+      "date": "2026-06-14",
+      "results": [
+        {
+          "source": "HenokB/Startups-in-Ethiopia (GitHub community list)",
+          "found": 9,
+          "added": 6
+        }
+      ]
+    }
+  },
+  "startups": [
+    {
+      "name": "Chapa",
+      "website": "https://chapa.co",
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2020",
+      "stage": "",
+      "description": "Payment gateway and API that lets businesses accept online and mobile payments in Ethiopia.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://shega.co/news/list-of-fintech-startups-in-ethiopia"
+        ]
+      }
+    },
+    {
+      "name": "Arifpay",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2021",
+      "stage": "",
+      "description": "Ethiopia's first licensed Point-of-Sale payment system operator (PSO), enabling card, QR and smartphone payments for merchants.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://fintechnews.ae/7962/ethiopia/ethiopian-fintech-scene-shows-great-promise-as-africas-next-fintech-hub/",
+          "https://shega.co/news/list-of-fintech-startups-in-ethiopia"
+        ]
+      }
+    },
+    {
+      "name": "Kifiya Financial Technology",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Financial-infrastructure company building digital payments, credit and insurance rails for financial inclusion.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://shega.co/news/list-of-fintech-startups-in-ethiopia"
+        ]
+      }
+    },
+    {
+      "name": "SantimPay",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2019",
+      "stage": "",
+      "description": "Merchant payments and financial infrastructure, enabling businesses to accept modern payments.",
+      "_funding": {
+        "note": "Established with a 160-million-birr initial investment",
+        "source": "https://fintechnews.ae/7962/ethiopia/ethiopian-fintech-scene-shows-great-promise-as-africas-next-fintech-hub/"
+      },
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://fintechnews.ae/7962/ethiopia/ethiopian-fintech-scene-shows-great-promise-as-africas-next-fintech-hub/"
+        ]
+      }
+    },
+    {
+      "name": "Kacha Digital Financial Services",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2022",
+      "stage": "",
+      "description": "One of Ethiopia's first privately licensed mobile-money operators.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://shega.co/news/list-of-fintech-startups-in-ethiopia"
+        ]
+      }
+    },
+    {
+      "name": "YaYa Wallet",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Digital wallet and payments product for individuals and merchants.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://shega.co/news/list-of-fintech-startups-in-ethiopia"
+        ]
+      }
+    },
+    {
+      "name": "LakiPay",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Digital platform offering SME lending and payments, challenging banks' hold on small-business credit.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://birrmetrics.com/lakipay-launches-digital-platform-to-challenge-banks-monopoly-on-sme-lending/"
+        ]
+      }
+    },
+    {
+      "name": "ZayRide",
+      "website": null,
+      "sector": "Mobility",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2016",
+      "stage": "",
+      "description": "On-demand, app-based ride-hailing taxi service; one of the largest in Ethiopia.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://www.cbinsights.com/company/zayride",
+          "https://qz.com/africa/1645894/ethiopias-ride-hailing-taxi-app-zayride-will-launch-in-liberia"
+        ]
+      }
+    },
+    {
+      "name": "Feres",
+      "website": null,
+      "sector": "Mobility",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Ride-hailing and on-demand mobility/delivery super-app operating in Addis Ababa.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://allaboutethio.com/10-best-uber-like-ride-and-taxi-service-companies-in-ethiopia.html"
+        ]
+      }
+    },
+    {
+      "name": "RIDE",
+      "website": null,
+      "sector": "Mobility",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2014",
+      "stage": "",
+      "description": "RIDE — Ethiopia’s most popular ride-hailing and transport-booking app (by Hybrid Designs PLC).",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://originsmediaethiopia.com/2022/04/15/enat-bank-hybrid-designs-agree-on-provision-of-loans-to-drivers/",
+          "https://en.wikipedia.org/wiki/Samrawit_Fikru"
+        ]
+      },
+      "founders": [
+        {
+          "name": "Samrawit Fikru",
+          "role": "Founder & CEO"
+        }
+      ]
+    },
+    {
+      "name": "BeU Delivery",
+      "website": null,
+      "sector": "Food delivery",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2021",
+      "stage": "",
+      "description": "On-demand food-delivery platform connecting customers with restaurants.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://shega.co/news/list-of-delivery-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "Deliver Addis",
+      "website": "https://deliveraddis.com",
+      "sector": "Food delivery",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2015",
+      "stage": "",
+      "description": "Online food-ordering and delivery service, one of Ethiopia's earliest; founded by Feleg Tsegaye.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://www.thereporterethiopia.com/12617/",
+          "https://shega.co/news/list-of-delivery-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "Eshi Express",
+      "website": "https://www.eshiexpress.com",
+      "sector": "Logistics & delivery",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2017",
+      "stage": "",
+      "description": "Tech-enabled last-mile delivery and logistics; a pioneer in app-based delivery in Ethiopia.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://www.eshiexpress.com/",
+          "https://shega.co/news/list-of-delivery-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "Garri Logistics",
+      "website": null,
+      "sector": "Logistics & delivery",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2021",
+      "stage": "",
+      "description": "Tech startup modernizing and digitizing the freight-logistics industry in Ethiopia.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://shega.co/news/list-of-delivery-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "ZMall",
+      "website": null,
+      "sector": "E-commerce",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Q-commerce platform for grocery, food and goods delivery.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://shega.co/news/list-of-delivery-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "Dodai",
+      "website": null,
+      "sector": "E-mobility",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2021",
+      "stage": "",
+      "description": "Electric-motorcycle assembler and e-mobility provider for Ethiopian riders and delivery fleets.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://disruptafrica.com/"
+        ]
+      }
+    },
+    {
+      "name": "Wetruck",
+      "website": null,
+      "sector": "Logistics & delivery",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Digital freight platform connecting cargo owners with truckers for East African logistics.",
+      "_meta": {
+        "confidence": "low",
+        "sources": [
+          "https://shega.co/news/list-of-delivery-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "Lersha",
+      "website": null,
+      "sector": "Agritech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "One-stop digital service for smallholder farmers — farm inputs, mechanization hire, and agro-climate advisory.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://shega.co/news/list-of-agritech-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "BFarmTech",
+      "website": null,
+      "sector": "Agritech",
+      "location": "Ethiopia",
+      "foundedYear": "2020",
+      "stage": "",
+      "description": "Platform connecting farmers to machinery rental, tools and secure payments to boost productivity.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://shega.co/news/list-of-agritech-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "Gebeya",
+      "website": "https://gebeya.com",
+      "sector": "Edtech / Talent",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2016",
+      "stage": "",
+      "description": "Pan-African tech-talent marketplace and training platform connecting freelancers with companies.",
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://africabusinesscommunities.com/tech/tech-news/ethiopian-based-edtech-startup-gabeya-launches-its-revamped-marketplace/"
+        ]
+      }
+    },
+    {
+      "name": "AhadooTec",
+      "website": null,
+      "sector": "Edtech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Edtech company behind the AhadooSmart platform for interactive learning materials and assessments.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.nucamp.co/blog/coding-bootcamp-ethiopia-eth-ethiopias-top-10-startups-that-tech-professionals-should-watch-out-for-in-2024"
+        ]
+      }
+    },
+    {
+      "name": "Orbit Health",
+      "website": null,
+      "sector": "Healthtech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Digital-health company building software to improve access to and delivery of healthcare.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.nucamp.co/blog/coding-bootcamp-ethiopia-eth-ethiopias-top-10-startups-that-tech-professionals-should-watch-out-for-in-2024"
+        ]
+      }
+    },
+    {
+      "name": "Roha Medical Campus",
+      "website": null,
+      "sector": "Healthcare",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "series-a",
+      "description": "Large-scale medical campus and healthcare operator in Addis Ababa.",
+      "_funding": {
+        "note": "~$42M venture/equity funding in Feb 2024 — among the largest Ethiopian rounds on record",
+        "source": "https://shega.co/category/funding"
+      },
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://shega.co/category/funding"
+        ]
+      }
+    },
+    {
+      "name": "Kubik",
+      "website": null,
+      "sector": "Cleantech / Construction",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": "2021",
+      "stage": "seed",
+      "description": "Turns hard-to-recycle plastic waste into affordable, low-carbon building materials.",
+      "_funding": {
+        "note": "$5.2M seed (2024), planning pan-African expansion",
+        "source": "https://disruptafrica.com/2024/05/10/ethiopian-low-carbon-building-startup-kubik-plans-pan-african-expansion-post-funding/"
+      },
+      "_meta": {
+        "confidence": "high",
+        "sources": [
+          "https://disruptafrica.com/2024/05/10/ethiopian-low-carbon-building-startup-kubik-plans-pan-african-expansion-post-funding/"
+        ]
+      }
+    },
+    {
+      "name": "EthioChicken",
+      "website": null,
+      "sector": "Agritech / Poultry",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Supplies improved-breed chicks and poultry inputs to smallholder farmers across Ethiopia.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://shega.co/news/total-enterprise-value-of-ethiopian-startups-passes-300-m-report"
+        ]
+      }
+    },
+    {
+      "name": "Sewasew Multimedia",
+      "website": null,
+      "sector": "Media / Streaming",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Music & audio streaming platform for Ethiopian content (350k+ users), expanding into podcasts.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://shega.co/news/major-ethiopian-streaming-platform-sewasew-set-to-make-waves-in-rising-local-podcast-scene"
+        ]
+      },
+      "founders": [
+        {
+          "name": "Samrawit Fikru"
+        }
+      ]
+    },
+    {
+      "name": "Gebeta Maps",
+      "website": null,
+      "sector": "Developer tools / Mapping",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Local mapping and location-API provider built for Ethiopian addresses and routing.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.nucamp.co/blog/coding-bootcamp-ethiopia-eth-inside-ethiopias-thriving-tech-hub-startups-and-success-stories"
+        ]
+      }
+    },
+    {
+      "name": "iCog Labs",
+      "website": "https://icog-labs.com/",
+      "sector": "",
+      "location": "Addis Ababa",
+      "foundedYear": "2012",
+      "stage": "",
+      "description": "iCog Labs is the first private AI and Robotics Research and Development Company in East Africa based in Addis Ababa, Ethiopia focusing mainly on Artificial  Intelligence R&D",
+      "founders": [
+        {
+          "name": "Getnet Assefa"
+        }
+      ],
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://raw.githubusercontent.com/HenokB/Startups-in-Ethiopia/main/README.md"
+        ],
+        "fetchedAt": "2026-06-14"
+      }
+    },
+    {
+      "name": "Qene Games",
+      "website": "https://qenetech.com/",
+      "sector": "",
+      "location": "Addis Ababa",
+      "foundedYear": "2017",
+      "stage": "",
+      "description": "Qene Games is Ethiopia’s first game development studio and the creator of Kukulu and Gebeta, both award-winning mobile games.",
+      "founders": [
+        {
+          "name": "Dawit Abraham"
+        },
+        {
+          "name": "Samuel Sisay"
+        }
+      ],
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://raw.githubusercontent.com/HenokB/Startups-in-Ethiopia/main/README.md"
+        ],
+        "fetchedAt": "2026-06-14"
+      }
+    },
+    {
+      "name": "Guzo Technologies",
+      "website": "https://guzo.tech",
+      "sector": "",
+      "location": "Addis Ababa",
+      "foundedYear": "2019",
+      "stage": "",
+      "description": "Guzo Technologies develops Internet of Things, Extended Reality products, prototyping, and enterprise software development.",
+      "founders": [
+        {
+          "name": "Daniel Getachew"
+        }
+      ],
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://raw.githubusercontent.com/HenokB/Startups-in-Ethiopia/main/README.md"
+        ],
+        "fetchedAt": "2026-06-14"
+      }
+    },
+    {
+      "name": "Avetol",
+      "website": "https://avetol.com/",
+      "sector": "",
+      "location": "Addis Ababa",
+      "foundedYear": "2017",
+      "stage": "",
+      "description": "Avetol is a video streaming platform, allowing users to easily access Ethiopian content curated for each person directly to their preferred devices, anywhere and everywhere.",
+      "founders": [
+        {
+          "name": "Morka Tesfaye"
+        }
+      ],
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://raw.githubusercontent.com/HenokB/Startups-in-Ethiopia/main/README.md"
+        ],
+        "fetchedAt": "2026-06-14"
+      }
+    },
+    {
+      "name": "Teraki",
+      "website": "https://terakiapp.com",
+      "sector": "",
+      "location": "Addis Ababa",
+      "foundedYear": "2020",
+      "stage": "",
+      "description": "Teraki is the first Ethiopian app to put together all Ethiopian Podcasts and Audiobooks by working directly with creators. By easing your listening journey, Teraki aims to bridge creators to listeners by bringing the most user-friendly surrounding.",
+      "founders": [
+        {
+          "name": "Nahom Tsegaye"
+        },
+        {
+          "name": "Abel Engida"
+        }
+      ],
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://raw.githubusercontent.com/HenokB/Startups-in-Ethiopia/main/README.md"
+        ],
+        "fetchedAt": "2026-06-14"
+      }
+    },
+    {
+      "name": "Addis Software",
+      "website": "https://addissoftware.com",
+      "sector": "",
+      "location": "Addis Ababa",
+      "foundedYear": "2019",
+      "stage": "",
+      "description": "Addis Software is a software development company that works closely with Ethiopian & Swedish developers from Sweetopia to fulfill high customer satisfaction.",
+      "founders": [
+        {
+          "name": "Eleni Mulugeta"
+        }
+      ],
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://raw.githubusercontent.com/HenokB/Startups-in-Ethiopia/main/README.md"
+        ],
+        "fetchedAt": "2026-06-14"
+      }
+    },
+    {
+      "name": "HellooMarket",
+      "website": null,
+      "sector": "E-commerce",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Online marketplace offering products across many categories for Ethiopian shoppers.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.facebook.com/HellooMarketEthiopia/"
+        ]
+      }
+    },
+    {
+      "name": "YenePay",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Online payment gateway enabling interoperable payments between banks, MFIs and e-money operators.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.ethiosports.com/2018/03/24/coworking-spaces-inspiring-innovators-in-ethiopia/"
+        ]
+      }
+    },
+    {
+      "name": "BeBlocky",
+      "website": null,
+      "sector": "Edtech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "AR-powered mobile app that teaches children to code.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.nucamp.co/blog/coding-bootcamp-ethiopia-eth-ethiopias-top-10-startups-that-tech-professionals-should-watch-out-for-in-2025"
+        ]
+      }
+    },
+    {
+      "name": "Easymed Digital Health",
+      "website": null,
+      "sector": "Healthtech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Digital health platform improving access to care; co-founded by Henok Kiflom.",
+      "founders": [
+        {
+          "name": "Henok Kiflom",
+          "role": "Co-founder & CTO"
+        }
+      ],
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://shega.co/news/three-ethiopian-startups-secure-spot-in-dstvs-accelerator-program"
+        ]
+      }
+    },
+    {
+      "name": "Apposit",
+      "website": null,
+      "sector": "Software",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Software-development firm building enterprise and payments systems for African markets.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.ethiosports.com/2018/03/24/coworking-spaces-inspiring-innovators-in-ethiopia/"
+        ]
+      }
+    },
+    {
+      "name": "HelloCash",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Mobile-money and agent-banking platform (by BelCash) connecting banks and MFIs.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.gsma.com/solutions-and-impact/connectivity-for-good/mobile-for-development/blog/the-ethiopia-tech-ecosystem-a-sleeping-giant-is-waking-up/"
+        ]
+      }
+    },
+    {
+      "name": "M-Birr",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Mobile-money service delivered through microfinance institutions for unbanked Ethiopians.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://www.gsma.com/solutions-and-impact/connectivity-for-good/mobile-for-development/blog/the-ethiopia-tech-ecosystem-a-sleeping-giant-is-waking-up/"
+        ]
+      }
+    },
+    {
+      "name": "iCog-ACC (Anyone Can Code)",
+      "website": null,
+      "sector": "Edtech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Children’s coding and robotics education initiative spun out of iCog Labs.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://icog-labs.com/"
+        ]
+      }
+    },
+    {
+      "name": "EagleLion System Technology",
+      "website": null,
+      "sector": "Software",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Software house building mobile and web products for Ethiopian businesses.",
+      "_meta": {
+        "confidence": "medium",
+        "sources": [
+          "https://github.com/HenokB/Startups-in-Ethiopia"
+        ]
+      }
+    },
+    {
+      "name": "Wash Addis",
+      "website": null,
+      "sector": "Services",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "On-demand laundry and dry-cleaning service for urban residents.",
+      "_meta": {
+        "confidence": "low",
+        "sources": [
+          "https://www.ethiosports.com/2018/03/24/coworking-spaces-inspiring-innovators-in-ethiopia/"
+        ]
+      }
+    },
+    {
+      "name": "Green Bean",
+      "website": null,
+      "sector": "Agritech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Agribusiness startup (incubated at blueMoon) linking coffee farmers to markets.",
+      "_meta": {
+        "confidence": "low",
+        "sources": [
+          "https://www.thereporterethiopia.com/4528/"
+        ]
+      }
+    },
+    {
+      "name": "Eleni",
+      "website": null,
+      "sector": "Fintech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Platform enabling the Ethiopian diaspora to fund early-stage local startups.",
+      "_meta": {
+        "confidence": "low",
+        "sources": [
+          "https://shega.co/category/funding"
+        ]
+      }
+    },
+    {
+      "name": "Kabba",
+      "website": null,
+      "sector": "Logistics & delivery",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "On-demand delivery and errands app.",
+      "_meta": {
+        "confidence": "low",
+        "sources": [
+          "https://shega.co/news/list-of-delivery-startups-in-ethiopia-2024"
+        ]
+      }
+    },
+    {
+      "name": "Blue Health Ethiopia",
+      "website": null,
+      "sector": "Healthtech",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "Digital-health startup working to improve access to healthcare.",
+      "_meta": {
+        "confidence": "low",
+        "sources": [
+          "https://www.nucamp.co/blog/coding-bootcamp-ethiopia-eth-ethiopias-top-10-startups-that-tech-professionals-should-watch-out-for-in-2025"
+        ]
+      }
+    },
+    {
+      "name": "Akilo AI Corp",
+      "website": null,
+      "sector": "AI",
+      "location": "Addis Ababa, Ethiopia",
+      "foundedYear": null,
+      "stage": "",
+      "description": "AI startup gaining recognition in Ethiopia’s emerging deep-tech scene.",
+      "_meta": {
+        "confidence": "low",
+        "sources": [
+          "https://www.nucamp.co/blog/coding-bootcamp-ethiopia-eth-ethiopias-top-10-startups-that-tech-professionals-should-watch-out-for-in-2025"
+        ]
+      }
+    }
+  ]
+}

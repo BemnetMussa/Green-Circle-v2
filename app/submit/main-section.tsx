@@ -129,6 +129,7 @@ export const MainSection: React.FC<{
         faydaId: true,
         terms: false,
         foundedYear: '2021',
+        stage: 'seed',
         employees: '25',
         revenue: '150000', // in USD
         achievements:
@@ -136,7 +137,7 @@ export const MainSection: React.FC<{
         founderPhone: '+251912345678',
         founderBio:
           'Selam Tesfaye is a tech entrepreneur passionate about digital agriculture, with over 7 years of experience in software development and rural innovation.',
-        documents: []
+        documents: [],
       });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -167,9 +168,9 @@ export const MainSection: React.FC<{
             <CardDescription>Verify your identity to proceed</CardDescription>
           </CardHeader>
           <CardContent>
-            <Alert className="mb-6 border-emerald-200 bg-emerald-50">
-              <Shield className="h-4 w-4 text-emerald-600" />
-              <AlertDescription className="text-emerald-800">
+            <Alert className="mb-6 border-emerald-200 bg-primary/10">
+              <Shield className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-primary/80">
                 <strong>Fayda ID Verification Required:</strong> Click below to
                 authenticate with Fayda Digital ID.
               </AlertDescription>
@@ -180,7 +181,7 @@ export const MainSection: React.FC<{
                 console.log('url', url);
                 window.location.href = `${url}`;
               }}
-              className="w-full bg-emerald-500 hover:bg-emerald-600"
+              className="w-full bg-primary/100 hover:bg-primary"
             >
               Verify with Fayda
             </Button>
@@ -209,21 +210,21 @@ export const MainSection: React.FC<{
                 <Alert
                   className={`mb-6 ${
                     submissionStatus.type === 'success'
-                      ? 'border-green-200 bg-green-50'
+                      ? 'border-primary/30 bg-primary/10'
                       : 'border-red-200 bg-red-50'
                   }`}
                 >
                   <AlertCircle
                     className={`h-4 w-4 ${
                       submissionStatus.type === 'success'
-                        ? 'text-green-600'
+                        ? 'text-primary'
                         : 'text-red-600'
                     }`}
                   />
                   <AlertDescription
                     className={
                       submissionStatus.type === 'success'
-                        ? 'text-green-800'
+                        ? 'text-primary/80'
                         : 'text-red-800'
                     }
                   >
@@ -344,6 +345,35 @@ export const MainSection: React.FC<{
                         </p>
                       )}
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stage">Company stage *</Label>
+                    <Select
+                      value={formData.stage}
+                      onValueChange={(value) =>
+                        handleInputChange('stage', value)
+                      }
+                    >
+                      <SelectTrigger
+                        className={fieldErrors.stage ? 'border-red-500' : ''}
+                      >
+                        <SelectValue placeholder="Select stage" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="idea">Idea / pre-product</SelectItem>
+                        <SelectItem value="pre-seed">Pre-seed</SelectItem>
+                        <SelectItem value="seed">Seed</SelectItem>
+                        <SelectItem value="series-a">Series A</SelectItem>
+                        <SelectItem value="series-b-plus">Series B+</SelectItem>
+                        <SelectItem value="bootstrapped">Bootstrapped</SelectItem>
+                        <SelectItem value="undisclosed">Undisclosed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {fieldErrors.stage && (
+                      <p className="text-red-500 text-sm">
+                        {fieldErrors.stage.join(', ')}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Short Description *</Label>
@@ -579,14 +609,14 @@ export const MainSection: React.FC<{
                         I agree to the{' '}
                         <Link
                           href="#"
-                          className="text-emerald-600 hover:text-emerald-700"
+                          className="text-primary hover:text-primary/90"
                         >
                           Terms of Service
                         </Link>{' '}
                         and{' '}
                         <Link
                           href="#"
-                          className="text-emerald-600 hover:text-emerald-700"
+                          className="text-primary hover:text-primary/90"
                         >
                           Privacy Policy
                         </Link>{' '}
@@ -603,7 +633,7 @@ export const MainSection: React.FC<{
 
                 <Button
                   type="submit"
-                  className="w-full bg-emerald-500 hover:bg-emerald-600"
+                  className="w-full bg-primary/100 hover:bg-primary"
                   size="lg"
                 >
                   {loading ? <ClipLoader /> : 'Submit for Review'}

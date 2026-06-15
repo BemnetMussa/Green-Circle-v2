@@ -35,6 +35,8 @@ export interface FormData {
   documents: string[];
 
   foundedYear: string;
+  /** Company stage — see `STARTUP_STAGES` in `lib/startup-stage.ts`. */
+  stage: string;
   employees: string;
   revenue: string;
   achievements: string;
@@ -78,6 +80,7 @@ export default function SubmitStartupForm({ verified }: { verified: boolean }) {
     faydaId: true,
     terms: false,
     foundedYear: '2021',
+    stage: 'seed',
     employees: '25',
     revenue: '150000', // in USD
     achievements:
@@ -135,8 +138,8 @@ export default function SubmitStartupForm({ verified }: { verified: boolean }) {
             Submit Your Startup
           </h1>
           <p className="mx-auto max-w-2xl text-gray-800">
-            Join Ethiopia&apos;s verified startup ecosystem. All submissions
-            require Fayda ID verification and approval under the national
+            Join Ethiopia&apos;s startup ecosystem on Green Circle. Submissions
+            use Fayda identity sign-in and go through review under the national
             Startup Law.
           </p>
         </div>
@@ -195,7 +198,7 @@ export default function SubmitStartupForm({ verified }: { verified: boolean }) {
                       <div
                         className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
                           index + 1 === currentStep
-                            ? 'bg-emerald-500'
+                            ? 'bg-primary/100'
                             : isStepCompleted
                             ? 'bg-emerald-300'
                             : 'bg-gray-300'
@@ -229,7 +232,7 @@ export default function SubmitStartupForm({ verified }: { verified: boolean }) {
                     'Growth potential',
                   ].map((req, index) => (
                     <li key={index} className="flex items-center space-x-2">
-                      <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                      <div className="h-2 w-2 rounded-full bg-primary/100"></div>
                       <span>{req}</span>
                     </li>
                   ))}

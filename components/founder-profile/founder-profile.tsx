@@ -23,6 +23,7 @@ import { Founder, Startup } from '@/types';
 import Loading from '@/app/loading';
 import { authClient } from '@/lib/auth-client';
 import Link from 'next/link';
+import { startupDetailHref } from '@/lib/startup-detail-href';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -220,9 +221,11 @@ export default function StartupProfile() {
           {/* Startup List */}
           <div className="space-y-4">
             {Array.isArray(filteredStartups) && filteredStartups.length > 0 ? (
-              filteredStartups.map((startup) => (
+              filteredStartups.map((startup) => {
+                const profileHref = startupDetailHref(startup);
+                return (
                 <Card
-                  key={startup._id}
+                  key={startup._id || startup.name}
                   className="p-5 hover:shadow-md transition-shadow border border-gray-200"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -257,19 +260,32 @@ export default function StartupProfile() {
                     </div>
 
                     <div className="shrink-0">
-                      <Link href={`/startups/${startup._id}`}>
+                      {profileHref ? (
+                        <Link href={profileHref}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs bg-white"
+                          >
+                            View Details
+                          </Button>
+                        </Link>
+                      ) : (
                         <Button
                           variant="outline"
                           size="sm"
                           className="text-xs bg-white"
+                          disabled
+                          title="Missing startup id in listing data"
                         >
                           View Details
                         </Button>
-                      </Link>
+                      )}
                     </div>
                   </div>
                 </Card>
-              ))
+                );
+              })
             ) : (
               <Card className="p-10 border border-gray-200 text-center text-gray-500">
                 <Building2 className="h-8 w-8 mx-auto mb-3 opacity-50" />

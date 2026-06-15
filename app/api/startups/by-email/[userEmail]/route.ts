@@ -2,6 +2,7 @@ import { Startup } from '@/models/start-up';
 import { IUser } from '@/models/user';
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDB } from '@/lib/db';
+import { serializeStartupId } from '@/lib/serialize-startup-id';
 
 // startup associated with the logged-in user
 export async function GET(
@@ -38,9 +39,14 @@ export async function GET(
       );
     }
 
+    const startupsPayload = startups.map((s) => {
+      const o = s.toObject({ flattenMaps: true, versionKey: false });
+      return { ...o, _id: serializeStartupId(o._id) };
+    });
+
     return NextResponse.json({
       message: 'Startups retrieved successfully',
-      startups,
+      startups: startupsPayload,
     });
   } catch (error: any) {
     return NextResponse.json(

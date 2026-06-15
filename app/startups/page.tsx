@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import StartupsForm from './startup-form';
 
 export default function StartupPage() {
-  return <StartupsForm />;
+  return (
+    <Suspense fallback={null}>
+      <StartupsForm />
+    </Suspense>
+  );
 }

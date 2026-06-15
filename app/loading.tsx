@@ -1,33 +1,21 @@
-'use client';
-
-import { motion } from 'framer-motion';
-
+/**
+ * Route-level fallback — minimal, token-aware, no heavy animation libs.
+ */
 export default function Loading() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-white">
-      
-      {/* Fast, crisp rotating ring */}
-      <motion.div
-        className="w-14 h-14 rounded-full border-4 border-gray-300 border-t-gray-800"
-        animate={{ rotate: 360 }}
-        transition={{
-          repeat: Infinity,
-          ease: "linear",
-          duration: 0.55,  // Fast and snappy
-        }}
+    <div
+      className="flex min-h-[38vh] flex-col items-center justify-center gap-3 bg-background px-6 py-16"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div
+        className="animate-gc-spin h-8 w-8 rounded-full border-2 border-forest/20 border-t-forest dark:border-forest/35 dark:border-t-forest"
+        aria-hidden="true"
       />
-
-      {/* Smooth fade text */}
-      <motion.p
-        className="mt-4 text-gray-600 font-medium text-base"
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{
-          repeat: Infinity,
-          duration: 1.2,
-        }}
-      >
-        Loading...
-      </motion.p>
+      <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-faint">
+        Loading
+      </p>
     </div>
   );
 }

@@ -12,6 +12,8 @@ export interface IStartup extends Document {
   description: string;
   achievements?: string[]; // Changed to Array
   documents?: string[];
+  pitch?: string;
+  banner?: string;
   
   
   // Contact Object (Matches frontend startup.contact.email)
@@ -31,8 +33,10 @@ export interface IStartup extends Document {
     x?: string;
   }[];
 
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'active';
   revenue?: string;
+  /** Product / funding stage (idea, seed, …) — not the same as `status` (approval). */
+  stage?: string;
   logo: string; // Uncommented
   createdAt: Date;
   updatedAt: Date;
@@ -54,6 +58,8 @@ const StartupSchema = new Schema<IStartup>(
     documents: { type: [String], default: [] },
     video: { type: String, default: null },
     logo: { type: String, default: "/placeholder-logo.png" },
+    banner: { type: String },
+    pitch: { type: String },
 
     // Grouped Contact Info
     contact: {
@@ -74,10 +80,11 @@ const StartupSchema = new Schema<IStartup>(
 
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'approved', 'rejected', 'active'],
       default: 'approved', // Default to approved for seed data
     },
     revenue: { type: String },
+    stage: { type: String, default: '' },
   },
   { timestamps: true }
 );

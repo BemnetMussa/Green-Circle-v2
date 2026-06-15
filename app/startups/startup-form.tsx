@@ -1,153 +1,456 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Search, LayoutList, LayoutGrid, X, AlertCircle } from 'lucide-react';
 import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
 import { StartupCard } from '@/components/startup-card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Search } from 'lucide-react';
+import { SectionKicker } from '@/components/editorial/section-kicker';
 import { Startup } from '@/types';
 import { filterStartup } from '@/lib/call-api/call-api';
+import {
+  STARTUP_STAGES,
+  STARTUP_STAGE_LABELS,
+  type StartupStage,
+} from '@/lib/startup-stage';
 import Loading from '../loading';
 
+type View = 'list' | 'grid';
+
 export default function StartupsForm() {
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSector, setSelectedSector] = useState('all');
-  const [selectedLocation, setSelectedLocation] = useState('all');
-  const [startup, setStartup] = useState<Startup[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(3);
 
   useEffect(() => {
-    const fetchStartups = async () => {
+    const q = searchParams.get('q');
+    setSearchTerm(q ?? '');
+  }, [searchParams]);
+  /** Empty array = no constraint (show all). */
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [selectedStages, setSelectedStages] = useState<string[]>([]);
+  const [view, setView] = useState<View>('list');
+  const [startups, setStartups] = useState<Startup[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(12);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadError(null);
+    setLoading(true);
+    (async () => {
       try {
         const data = await filterStartup();
-        setStartup(data);
+        if (!cancelled) {
+          setStartups(data ?? []);
+          setLoadError(null);
+        }
       } catch (err) {
         console.error('Failed to load startups:', err);
+        if (!cancelled) {
+          setStartups([]);
+          setLoadError(
+            "We couldn't load the directory. Check your connection and try again.",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
+  }, [reloadKey]);
 
-    fetchStartups();
-  }, []);
+  const { sectors, locations, stagesInData } = useMemo(() => {
+    const s = new Set<string>();
+    const l = new Set<string>();
+    const st = new Set<string>();
+    (startups ?? []).forEach((startup) => {
+      if (startup.sector) s.add(startup.sector);
+      if (startup.location) l.add(firstLocationToken(startup.location));
+      const raw = startup.stage?.trim();
+      if (raw) st.add(raw);
+    });
+    return {
+      sectors: Array.from(s).sort((a, b) => a.localeCompare(b)),
+      locations: Array.from(l).sort((a, b) => a.localeCompare(b)),
+      stagesInData: Array.from(st).sort(compareStageKeys),
+    };
+  }, [startups]);
 
-  if (loading) {
-    return <Loading />;
-  }
+  const filtered = useMemo(() => {
+    if (!startups) return [];
+    const q = searchTerm.trim().toLowerCase();
+    return startups.filter((startup) => {
+      const matchesSearch =
+        !q ||
+        startup.name.toLowerCase().includes(q) ||
+        startup.description.toLowerCase().includes(q);
+      const matchesSector =
+        selectedSectors.length === 0 ||
+        Boolean(startup.sector && selectedSectors.includes(startup.sector));
+      const loc = firstLocationToken(startup.location);
+      const matchesLocation =
+        selectedLocations.length === 0 ||
+        selectedLocations.includes(loc);
+      const stageKey = startup.stage?.trim() ?? '';
+      const matchesStage =
+        selectedStages.length === 0 ||
+        (stageKey !== '' && selectedStages.includes(stageKey));
+      return (
+        matchesSearch && matchesSector && matchesLocation && matchesStage
+      );
+    });
+  }, [
+    startups,
+    searchTerm,
+    selectedSectors,
+    selectedLocations,
+    selectedStages,
+  ]);
 
-  const filteredStartups = startup?.filter((startup) => {
-    const matchesSearch =
-      startup.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      startup.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSector =
-      selectedSector === 'all' ||
-      startup.sector?.toLowerCase() === selectedSector;
-    const matchesLocation =
-      selectedLocation === 'all' ||
-      startup.location.toLowerCase().includes(selectedLocation);
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [searchTerm, selectedSectors, selectedLocations, selectedStages]);
 
-    return matchesSearch && matchesSector && matchesLocation;
-  });
+  const hasActiveFilter =
+    selectedSectors.length > 0 ||
+    selectedLocations.length > 0 ||
+    selectedStages.length > 0 ||
+    searchTerm.trim() !== '';
 
-  const filteredAndVisibleStartups = filteredStartups?.slice(0, visibleCount);
+  if (loading) return <Loading />;
+
+  const visible = filtered.slice(0, visibleCount);
+  const total = startups?.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-paper flex flex-col">
       <Header currentPage="startups" />
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            Startup Directory
-          </h1>
-          <p className="text-gray-800">
-            Discover {startup?.length} verified startups approved under
-            Ethiopia&apos;s national Startup Law
-          </p>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-8 flex flex-col gap-4 md:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-800" />
-            <Input
-              placeholder="Search startups..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <Select value={selectedSector} onValueChange={setSelectedSector}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="All Sectors" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sectors</SelectItem>
-              <SelectItem value="fintech">FinTech</SelectItem>
-              <SelectItem value="agriculture">Agriculture</SelectItem>
-              <SelectItem value="education">Education</SelectItem>
-              <SelectItem value="healthcare">Healthcare</SelectItem>
-              <SelectItem value="energy">Clean Energy</SelectItem>
-              <SelectItem value="logistics">Logistics</SelectItem>
-              <SelectItem value="tech">Tech</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="All Locations" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              <SelectItem value="addis">Addis Ababa</SelectItem>
-              <SelectItem value="bahir">Bahir Dar</SelectItem>
-              <SelectItem value="mekelle">Mekelle</SelectItem>
-              <SelectItem value="hawassa">Hawassa</SelectItem>
-              <SelectItem value="dire">Dire Dawa</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Startup Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredAndVisibleStartups?.map((startup) => (
-            <StartupCard key={startup._id} startup={startup} />
-          ))}
-        </div>
-
-        {filteredStartups?.length === 0 && (
-          <div className="py-12 text-center">
-            <p className="text-gray-500">
-              No startups found matching your criteria.
+      <main className="flex-1">
+        {/* Header band — light, distinct zone */}
+        <div className="border-b border-rule bg-paper-tint">
+          <div className="mx-auto w-full max-w-[90rem] px-6 lg:px-10 py-10">
+            <SectionKicker>The Directory</SectionKicker>
+            <h1 className="mt-4 text-3xl sm:text-4xl font-sans font-semibold tracking-tight text-ink text-balance">
+              Every startup on Green Circle.
+            </h1>
+            <p className="mt-3 max-w-[60ch] text-base text-ink-muted leading-[1.6]">
+              {loadError
+                ? 'When the directory loads, you can search and filter every public listing.'
+                : total > 0
+                  ? `${total} startup${total === 1 ? '' : 's'} across ${sectors.length} sector${sectors.length === 1 ? '' : 's'}. Each scored on investment signal — reach out directly.`
+                  : 'No startups featured yet. Check back next week — we add one or two each time we meet a founder.'}
             </p>
           </div>
-        )}
+        </div>
 
-        {/* Load More */}
-        {filteredStartups && visibleCount < filteredStartups.length && (
-          <div className="mt-12 text-center">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setVisibleCount((prev) => prev + 3)} // Load 3 more
-            >
-              Load More Startups
-            </Button>
+        {/* Body — darker backdrop so cards and the filter panel lift off it */}
+        <div className="bg-paper-deep">
+          <div className="mx-auto w-full max-w-[90rem] px-6 lg:px-10 py-10">
+            {loadError && (
+              <div
+                role="alert"
+                aria-live="polite"
+                className="mb-8 flex flex-col gap-4 rounded-lg border border-rule bg-paper-tint px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5"
+              >
+                <div className="flex gap-3 text-left">
+                  <AlertCircle className="h-5 w-5 shrink-0 text-forest mt-0.5" strokeWidth={1.75} aria-hidden />
+                  <p className="text-sm leading-relaxed text-ink">{loadError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReloadKey((k) => k + 1)}
+                  className="h-10 shrink-0 rounded-md bg-forest px-4 font-sans text-sm font-medium text-paper transition-colors hover:bg-forest-soft sm:self-center"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            <div className="flex flex-col items-start gap-8 lg:flex-row">
+              {/* Filter panel — sticks below the 64px header; scrolls internally if tall */}
+              <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64">
+                <div className="flex flex-col gap-6 rounded-xl border border-rule bg-paper-tint p-5 shadow-sm lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+                  <div className="relative w-full">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" strokeWidth={1.5} />
+                    <input
+                      type="search"
+                      placeholder="Search startups"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full h-10 pl-10 pr-3 bg-paper border border-rule rounded-md text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest transition-colors"
+                    />
+                  </div>
+
+                  <FilterCheckboxGroup
+                    label="Sector"
+                    options={sectors}
+                    selected={selectedSectors}
+                    onToggle={(value) => setSelectedSectors((prev) => toggleList(prev, value))}
+                  />
+                  {locations.length > 0 && (
+                    <FilterCheckboxGroup
+                      label="Location"
+                      options={locations}
+                      selected={selectedLocations}
+                      onToggle={(value) => setSelectedLocations((prev) => toggleList(prev, value))}
+                    />
+                  )}
+                  {stagesInData.length > 0 && (
+                    <FilterCheckboxGroup
+                      label="Stage"
+                      options={stagesInData}
+                      selected={selectedStages}
+                      onToggle={(value) => setSelectedStages((prev) => toggleList(prev, value))}
+                      formatLabel={stageCheckboxLabel}
+                    />
+                  )}
+                </div>
+              </aside>
+
+              {/* Results */}
+              <div className="min-w-0 w-full flex-1">
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-ink-muted">
+                      <span className="font-semibold text-ink">{filtered.length}</span>{' '}
+                      {filtered.length === 1 ? 'startup' : 'startups'}
+                    </span>
+                    {hasActiveFilter && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          setSelectedSectors([]);
+                          setSelectedLocations([]);
+                          setSelectedStages([]);
+                        }}
+                        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                  <ViewToggle view={view} onChange={setView} />
+                </div>
+
+                {filtered.length === 0 ? (
+                  <EmptyState
+                    onClear={() => {
+                      setSearchTerm('');
+                      setSelectedSectors([]);
+                      setSelectedLocations([]);
+                      setSelectedStages([]);
+                    }}
+                    hasFilter={hasActiveFilter}
+                  />
+                ) : view === 'list' ? (
+                  <div className="overflow-hidden rounded-xl border border-rule bg-paper-tint shadow-sm divide-y divide-rule-soft">
+                    {visible.map((startup, idx) => (
+                      <StartupCard key={`${startup._id}-${idx}`} startup={startup} variant="row" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {visible.map((startup, idx) => (
+                      <StartupCard key={`${startup._id}-${idx}`} startup={startup} variant="grid" />
+                    ))}
+                  </div>
+                )}
+
+                {filtered.length > 0 && visibleCount < filtered.length && (
+                  <div className="mt-10 flex justify-center">
+                    <button
+                      onClick={() => setVisibleCount((v) => v + 12)}
+                      className="h-11 px-6 rounded-md border border-ink text-ink hover:bg-ink hover:text-paper transition-colors text-sm font-medium"
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      </main>
+
+      <Footer />
     </div>
   );
+}
+
+/* -------------------------------------------------------------------------- */
+
+function toggleList(list: string[], value: string): string[] {
+  if (list.includes(value)) return list.filter((x) => x !== value);
+  return [...list, value];
+}
+
+function compareStageKeys(a: string, b: string): number {
+  const ia = STARTUP_STAGES.indexOf(a as StartupStage);
+  const ib = STARTUP_STAGES.indexOf(b as StartupStage);
+  if (ia !== -1 && ib !== -1) return ia - ib;
+  if (ia !== -1) return -1;
+  if (ib !== -1) return 1;
+  return a.localeCompare(b);
+}
+
+function stageCheckboxLabel(raw: string): string {
+  const k = raw.trim() as StartupStage;
+  if (k in STARTUP_STAGE_LABELS) return STARTUP_STAGE_LABELS[k];
+  return raw.trim();
+}
+
+function FilterCheckboxGroup({
+  label,
+  options,
+  selected,
+  onToggle,
+  formatLabel = (o: string) => o,
+  dotColor,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  formatLabel?: (option: string) => string;
+  dotColor?: (option: string) => string;
+}) {
+  const baseId = useId();
+  if (options.length === 0) return null;
+  return (
+    <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+      <legend className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+        {label}
+      </legend>
+      <div className="flex flex-col gap-0.5" role="group" aria-label={label}>
+        {options.map((option, idx) => {
+          const checked = selected.includes(option);
+          const id = `${baseId}-${idx}`;
+          return (
+            <label
+              key={`${option}-${idx}`}
+              htmlFor={id}
+              className={`flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-paper-deep/50 ${
+                checked ? 'text-ink' : 'text-ink-muted hover:text-ink'
+              }`}
+            >
+              <input
+                id={id}
+                type="checkbox"
+                checked={checked}
+                onChange={() => onToggle(option)}
+                className="h-4 w-4 shrink-0 rounded border-rule text-forest focus:ring-2 focus:ring-forest/30 focus:ring-offset-0"
+              />
+              {dotColor && (
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: dotColor(option) }} />
+              )}
+              <span className={`leading-snug ${checked ? 'font-medium' : 'font-normal'}`}>
+                {formatLabel(option)}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: View;
+  onChange: (v: View) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Directory view"
+      className="inline-flex self-start sm:self-auto rounded-md border border-rule bg-paper-tint p-0.5"
+    >
+      <ToggleButton
+        active={view === 'list'}
+        onClick={() => onChange('list')}
+        label="List"
+        icon={<LayoutList className="h-4 w-4" strokeWidth={1.5} />}
+      />
+      <ToggleButton
+        active={view === 'grid'}
+        onClick={() => onChange('grid')}
+        label="Grid"
+        icon={<LayoutGrid className="h-4 w-4" strokeWidth={1.5} />}
+      />
+    </div>
+  );
+}
+
+function ToggleButton({
+  active,
+  onClick,
+  label,
+  icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={`h-8 px-3 inline-flex items-center gap-2 rounded-[0.375rem] text-xs font-medium transition-colors ${
+        active
+          ? 'bg-paper text-ink shadow-sm'
+          : 'text-ink-muted hover:text-ink'
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function EmptyState({
+  onClear,
+  hasFilter,
+}: {
+  onClear: () => void;
+  hasFilter: boolean;
+}) {
+  return (
+    <div className="py-20 text-center max-w-md mx-auto">
+      <p className="text-lg text-ink-muted leading-relaxed text-pretty">
+        Nothing matches yet. {hasFilter && 'Try clearing a filter, or '}
+        <a
+          href="mailto:hello@greencircle.et?subject=A%20founder%20you%20should%20know"
+          className="text-ink underline underline-offset-4 decoration-rule hover:decoration-ink transition-colors"
+        >
+          let us know who we&rsquo;re missing
+        </a>
+        .
+      </p>
+      {hasFilter && (
+        <button
+          onClick={onClear}
+          className="mt-6 h-10 px-5 rounded-md border border-ink text-ink hover:bg-ink hover:text-paper transition-colors text-sm font-medium"
+        >
+          Clear filters
+        </button>
+      )}
+    </div>
+  );
+}
+
+function firstLocationToken(location: string): string {
+  return location?.split(',')[0]?.trim() || location;
 }
